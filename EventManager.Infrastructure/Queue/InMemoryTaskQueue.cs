@@ -1,7 +1,8 @@
-﻿using EventManager.Infrastructure.Interfaces;
-using System.Threading.Channels;
+﻿using System.Threading.Channels;
+using EventManager.Application.Interfaces;
+using Microsoft.Extensions.Logging;
 
-namespace EventManager.Infrastructure;
+namespace EventManager.Infrastructure.Queue;
 
 public class InMemoryTaskQueue<T>(ILogger<InMemoryTaskQueue<T>> logger) : ITaskQueue<T> where T : class
 {

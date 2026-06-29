@@ -1,10 +1,9 @@
-﻿using EventManager.DataAccess;
-using EventManager.Features.Bookings.Interfaces;
-using EventManager.Features.Bookings.Model;
-using EventManager.Infrastructure.Exceptions;
+﻿using EventManager.Application.Interfaces.Repositories;
+using EventManager.Domain.Entities;
+using EventManager.Domain.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
-namespace EventManager.Features.Bookings;
+namespace EventManager.Infrastructure.Persistence.Repositories;
 
 public class BookingRepository(AppDbContext context) : IBookingRepository
 {

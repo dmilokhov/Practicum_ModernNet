@@ -1,4 +1,6 @@
-﻿using EventManager.Features.Bookings.Interfaces;
+﻿using EventManager.Application.Interfaces;
+using EventManager.Application.Model.DTOs;
+using EventManager.Domain.Entities;
 
 namespace EventManager.Application.Model.Factories;
 

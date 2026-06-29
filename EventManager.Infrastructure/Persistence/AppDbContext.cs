@@ -1,8 +1,7 @@
-﻿using EventManager.Features.Bookings.Model;
-using EventManager.Features.Events.Model;
+﻿using EventManager.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace EventManager.DataAccess;
+namespace EventManager.Infrastructure.Persistence;
 
 public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {

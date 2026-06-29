@@ -1,12 +1,11 @@
-﻿using EventManager.DataAccess;
-using EventManager.Features.Events.Interfaces;
-using EventManager.Features.Events.Model;
-using EventManager.Infrastructure.Exceptions;
-using EventManager.Models;
+﻿using EventManager.Application.Helpers;
+using EventManager.Application.Interfaces.Repositories;
+using EventManager.Application.Model.Filters;
+using EventManager.Domain.Entities;
+using EventManager.Domain.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
-namespace EventManager.Features.Events;
-
+namespace EventManager.Infrastructure.Persistence.Repositories;
 public class EventRepository(AppDbContext context) : IEventRepository
 {
     public async Task<(IReadOnlyList<Event>, int totalCount)> GetPagedAsync(

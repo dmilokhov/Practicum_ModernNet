@@ -1,11 +1,14 @@
-﻿using EventManager.Features.Bookings.Interfaces;
-using EventManager.Features.Bookings.Model;
-using EventManager.Features.Events.Interfaces;
-using EventManager.Features.Events.Model;
-using EventManager.Infrastructure.Exceptions;
-using EventManager.Infrastructure.Interfaces;
+﻿using EventManager.Application.Interfaces;
+using EventManager.Application.Interfaces.Repositories;
+using EventManager.Application.Interfaces.Services;
+using EventManager.Application.Model.DTOs;
+using EventManager.Domain.Entities;
+using EventManager.Domain.Exceptions;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
-namespace EventManager.Features.Bookings;
+namespace EventManager.Infrastructure.Services;
 
 public class BookingBackgroundService(ILogger<BookingBackgroundService> logger,
     ITaskQueue<BookingDto> bookingQueue,

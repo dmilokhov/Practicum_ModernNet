@@ -10,28 +10,22 @@
 
   <ItemGroup>
     <Compile Remove="Controllers\**" />
+    <Compile Remove="Infrastructure\Interfaces\**" />
     <Content Remove="Controllers\**" />
+    <Content Remove="Infrastructure\Interfaces\**" />
     <EmbeddedResource Remove="Controllers\**" />
+    <EmbeddedResource Remove="Infrastructure\Interfaces\**" />
     <None Remove="Controllers\**" />
+    <None Remove="Infrastructure\Interfaces\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.16" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.16">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\EventManager.Application\EventManager.Application.csproj" />
     <ProjectReference Include="..\EventManager.Infrastructure\EventManager.Infrastructure.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Infrastructure\Interfaces\" />
   </ItemGroup>
 
 </Project>
