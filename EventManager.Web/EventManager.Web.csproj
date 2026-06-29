@@ -9,17 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Controllers\**" />
-    <Compile Remove="Infrastructure\Interfaces\**" />
-    <Content Remove="Controllers\**" />
-    <Content Remove="Infrastructure\Interfaces\**" />
-    <EmbeddedResource Remove="Controllers\**" />
-    <EmbeddedResource Remove="Infrastructure\Interfaces\**" />
-    <None Remove="Controllers\**" />
-    <None Remove="Infrastructure\Interfaces\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
   </ItemGroup>
 

@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Reflection;
+using EventManager.Web.Contracts;
 
-namespace EventManager.Infrastructure;
+namespace EventManager.Web;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services)
+    public static IServiceCollection AddPresentation(this IServiceCollection services)
     {
         services.AddControllers().ConfigureApiBehaviorOptions(options =>
         {

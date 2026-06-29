@@ -1,14 +1,13 @@
-﻿using EventManager.Features.Bookings.Interfaces;
-using EventManager.Features.Bookings.Model;
-using EventManager.Features.Events.Interfaces;
-using EventManager.Features.Events.Model;
-using EventManager.Infrastructure;
-using EventManager.Infrastructure.Constants;
-using EventManager.Infrastructure.Interfaces;
-using EventManager.Models;
+﻿using EventManager.Application.Helpers;
+using EventManager.Application.Interfaces;
+using EventManager.Application.Interfaces.Services;
+using EventManager.Application.Model.DTOs;
+using EventManager.Application.Model.Filters;
+using EventManager.Domain.Constants;
+using EventManager.Web.Contracts;
 using Microsoft.AspNetCore.Mvc;
 
-namespace EventManager.Features.Events;
+namespace EventManager.Web.Controllers;
 
 [ApiController]
 [Route("[controller]")]
@@ -53,7 +52,7 @@ public class EventsController(IEventService eventService, IBookingService bookin
     [ProducesResponseType(typeof(ApiResult<FullEventDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status404NotFound)]
     [Produces("application/json")]
-    [HttpGet("{id:guid}", Name = Constants.GetAsyncRoute)]
+    [HttpGet("{id:guid}", Name = RouteNames.GetAsyncRoute)]
     public async Task<ActionResult<ApiResult<FullEventDto>>> GetAsync(Guid id, CancellationToken ct = default)
     {
         var eventDto = await eventService.GetEventAsync(id, ct);
@@ -79,7 +78,7 @@ public class EventsController(IEventService eventService, IBookingService bookin
         CancellationToken ct = default)
     {
         var createdEvent = await eventService.AddEventAsync(eventDto, ct);
-        return CreatedAtRoute(Constants.GetAsyncRoute, new { id = createdEvent.Id }, new ApiResult<FullEventDto>
+        return CreatedAtRoute(RouteNames.GetAsyncRoute, new { id = createdEvent.Id }, new ApiResult<FullEventDto>
         {
             Data = createdEvent,
             Message = $"Event created: {createdEvent.Id}"
@@ -142,7 +141,7 @@ public class EventsController(IEventService eventService, IBookingService bookin
         var bookingDto = await bookingService.CreateBookingAsync(id, ct);
         await bookingQueue.EnqueueAsync(bookingDto, ct);
 
-        return AcceptedAtRoute(Constants.GetBookingIdRoute, new { bookingId = bookingDto.Id }, 
+        return AcceptedAtRoute(RouteNames.GetBookingIdRoute, new { bookingId = bookingDto.Id }, 
             new ApiResult<BookingDto>
             {
                 Data = bookingDto,

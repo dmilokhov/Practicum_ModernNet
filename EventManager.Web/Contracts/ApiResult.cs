@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace EventManager.Infrastructure;
+namespace EventManager.Web.Contracts;
 
 /// <summary>
 ///  Base class with result params

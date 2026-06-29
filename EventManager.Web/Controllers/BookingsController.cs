@@ -1,10 +1,10 @@
-﻿using EventManager.Features.Bookings.Interfaces;
-using EventManager.Features.Bookings.Model;
-using EventManager.Infrastructure;
-using EventManager.Infrastructure.Constants;
+﻿using EventManager.Application.Interfaces.Services;
+using EventManager.Application.Model.DTOs;
+using EventManager.Domain.Constants;
+using EventManager.Web.Contracts;
 using Microsoft.AspNetCore.Mvc;
 
-namespace EventManager.Features.Bookings
+namespace EventManager.Web.Controllers
 {
     [ApiController]
     [Route("[controller]")]
@@ -20,7 +20,7 @@ namespace EventManager.Features.Bookings
         [ProducesResponseType(typeof(ApiResult<BookingDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status404NotFound)]
         [Produces("application/json")]
-        [HttpGet("{bookingId:guid}", Name = Constants.GetBookingIdRoute)]
+        [HttpGet("{bookingId:guid}", Name = RouteNames.GetBookingIdRoute)]
         public async Task<ActionResult<ApiResult<BookingDto>>> GetAsync(Guid bookingId, CancellationToken ct = default)
         {
             var bookingDto = await bookingService.GetBookingByIdAsync(bookingId, ct);

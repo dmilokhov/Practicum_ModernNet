@@ -1,8 +1,8 @@
-using EventManager.DataAccess;
-using EventManager.Features.Bookings;
-using EventManager.Features.Events;
+using EventManager.Application;
 using EventManager.Infrastructure;
+using EventManager.Infrastructure.Persistence;
 using EventManager.Middleware;
+using EventManager.Web;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,9 +19,9 @@ if(isDevelopment)
 }
 
 //services
-builder.Services.AddEventServices();
-builder.Services.AddBookingServices();
+builder.Services.AddApplication();
 builder.Services.AddInfrastructure();
+builder.Services.AddPresentation();
 
 builder.Logging.AddConsole();
 
