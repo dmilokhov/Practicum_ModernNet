@@ -1,6 +1,6 @@
 ﻿using EventManager.Features.Bookings.Interfaces;
 
-namespace EventManager.Features.Bookings.Model;
+namespace EventManager.Application.Model.Factories;
 
 public class BookingFactory : IBookingFactory
 {

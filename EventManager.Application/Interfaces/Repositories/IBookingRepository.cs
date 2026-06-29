@@ -1,6 +1,6 @@
-﻿using EventManager.Features.Bookings.Model;
+﻿using EventManager.Domain.Entities;
 
-namespace EventManager.Features.Bookings.Interfaces;
+namespace EventManager.Application.Interfaces.Repositories;
 
 public interface IBookingRepository
 {

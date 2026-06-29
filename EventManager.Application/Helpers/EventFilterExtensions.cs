@@ -1,4 +1,7 @@
-﻿namespace EventManager.Features.Events.Model;
+﻿using EventManager.Application.Model.Filters;
+using EventManager.Domain.Entities;
+
+namespace EventManager.Application.Helpers;
 
 public static class EventFilterExtensions
 {

@@ -1,7 +1,7 @@
-using EventManager.Features.Bookings.Interfaces;
 using System.Collections.Concurrent;
+using EventManager.Application.Interfaces.Services;
 
-namespace EventManager.Features.Bookings;
+namespace EventManager.Application.Services;
 
 public class EventBookingLockProvider : IEventBookingLockProvider
 {

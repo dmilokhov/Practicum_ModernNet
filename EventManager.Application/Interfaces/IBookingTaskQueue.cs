@@ -1,4 +1,4 @@
-﻿namespace EventManager.Infrastructure.Interfaces;
+﻿namespace EventManager.Application.Interfaces;
 
 public interface ITaskQueue<T>
 {

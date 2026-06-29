@@ -1,4 +1,4 @@
-﻿namespace EventManager.Models;
+﻿namespace EventManager.Application.Helpers;
 
 public record PagedResponse<T>(
     IEnumerable<T> Items,

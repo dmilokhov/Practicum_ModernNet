@@ -1,6 +1,7 @@
-﻿using EventManager.Features.Events.Model;
+﻿using EventManager.Application.Model.Filters;
+using EventManager.Domain.Entities;
 
-namespace EventManager.Features.Events.Interfaces;
+namespace EventManager.Application.Interfaces.Repositories;
 
 public interface IEventRepository
 {

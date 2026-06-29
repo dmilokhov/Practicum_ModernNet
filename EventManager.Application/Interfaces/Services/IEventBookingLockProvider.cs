@@ -1,4 +1,4 @@
-namespace EventManager.Features.Bookings.Interfaces;
+namespace EventManager.Application.Interfaces.Services;
 
 public interface IEventBookingLockProvider
 {

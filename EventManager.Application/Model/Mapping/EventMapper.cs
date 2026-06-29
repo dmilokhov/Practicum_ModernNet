@@ -1,4 +1,7 @@
-﻿namespace EventManager.Features.Events.Model;
+﻿using EventManager.Application.Model.DTOs;
+using EventManager.Domain.Entities;
+
+namespace EventManager.Application.Model.Mapping;
 
 public static class EventMapper
 {

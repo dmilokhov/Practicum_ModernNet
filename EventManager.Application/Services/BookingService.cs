@@ -1,10 +1,13 @@
-﻿using EventManager.Features.Bookings.Interfaces;
-using EventManager.Features.Bookings.Model;
-using EventManager.Features.Events.Interfaces;
-using EventManager.Infrastructure.Constants;
-using EventManager.Infrastructure.Exceptions;
+﻿using EventManager.Application.Interfaces;
+using EventManager.Application.Interfaces.Repositories;
+using EventManager.Application.Interfaces.Services;
+using EventManager.Application.Model.DTOs;
+using EventManager.Application.Model.Mapping;
+using EventManager.Domain.Constants;
+using EventManager.Domain.Entities;
+using EventManager.Domain.Exceptions;
 
-namespace EventManager.Features.Bookings;
+namespace EventManager.Application.Services;
 
 public class BookingService(IBookingFactory bookingFactory,
     IBookingRepository bookingRepository,
@@ -20,7 +23,7 @@ public class BookingService(IBookingFactory bookingFactory,
             var reserved = eventForBooking.TryReserveSeats();
             if (!reserved)
             {
-                throw new NoAvailableSeatsException(Constants.NoAvailableSeatsExceptionMsg);
+                throw new NoAvailableSeatsException(ExceptionMessages.NoAvailableSeatsExceptionMsg);
             }
 
             var bookingDto = bookingFactory.CreateBookingDto(eventId);

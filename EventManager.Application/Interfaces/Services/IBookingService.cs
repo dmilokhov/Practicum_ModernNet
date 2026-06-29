@@ -1,8 +1,7 @@
-﻿using EventManager.Features.Bookings.Model;
+﻿using EventManager.Application.Model.DTOs;
 
-namespace EventManager.Features.Bookings.Interfaces
-{
-    public interface IBookingService
+namespace EventManager.Application.Interfaces.Services;
+public interface IBookingService
     {
         Task<BookingDto> CreateBookingAsync(Guid eventId, CancellationToken ct = default);
         Task<BookingDto> GetBookingByIdAsync(Guid bookingId, CancellationToken ct = default);
