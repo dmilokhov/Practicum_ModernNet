@@ -1,9 +1,11 @@
-﻿using EventManager.DataAccess;
-using EventManager.Features.Bookings;
-using EventManager.Features.Bookings.Interfaces;
-using EventManager.Features.Bookings.Model;
-using EventManager.Features.Events;
-using EventManager.Features.Events.Interfaces;
+﻿using EventManager.Application.Interfaces;
+using EventManager.Application.Interfaces.Repositories;
+using EventManager.Application.Interfaces.Services;
+using EventManager.Application.Model.Factories;
+using EventManager.Application.Services;
+using EventManager.Infrastructure.Persistence;
+using EventManager.Infrastructure.Persistence.Repositories;
+using EventManager.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 

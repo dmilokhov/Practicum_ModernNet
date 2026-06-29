@@ -1,8 +1,9 @@
-﻿using EventManager.Features.Bookings;
-using EventManager.Features.Bookings.Model;
-using EventManager.Features.Events;
-using EventManager.Features.Events.Model;
-using EventManager.Infrastructure.Exceptions;
+﻿using EventManager.Application.Model.Factories;
+using EventManager.Application.Services;
+using EventManager.Domain.Entities;
+using EventManager.Domain.Exceptions;
+using EventManager.Infrastructure.Persistence.Repositories;
+using EventManager.Infrastructure.Services;
 using EventManager.IntegrationTests.Infrastructure;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
