@@ -1,4 +1,4 @@
-﻿namespace EventManager.Infrastructure.Exceptions;
+﻿namespace EventManager.Domain.Exceptions;
 
 public class EntityNotFoundException : NotFoundException
 {

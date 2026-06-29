@@ -1,8 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
-using EventManager.Features.Events.Model;
-using EventManager.Infrastructure.Constants;
+﻿using EventManager.Domain.Constants;
+using System.ComponentModel.DataAnnotations;
 
-namespace EventManager.Features.Bookings.Model;
+namespace EventManager.Domain.Entities;
 
 public enum BookingStatus { Pending, Confirmed, Rejected }
 
@@ -33,7 +32,7 @@ public class Booking
 
         if (processedAt.Value < CreatedAt)
         {
-            throw new ValidationException(Constants.ProcessedDateLaterThanCreatedMsg);
+            throw new ValidationException(ValidationMessages.ProcessedDateLaterThanCreatedMsg);
         }
 
         ProcessedAt = processedAt;

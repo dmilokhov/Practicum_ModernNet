@@ -1,8 +1,7 @@
-using EventManager.Infrastructure.Constants;
+using EventManager.Domain.Constants;
 using System.ComponentModel.DataAnnotations;
-using EventManager.Features.Bookings.Model;
 
-namespace EventManager.Features.Events.Model;
+namespace EventManager.Domain.Entities;
 
 public class Event
 {
@@ -72,17 +71,17 @@ public class Event
     {
         if(string.IsNullOrWhiteSpace(title))
         {
-            throw new ValidationException(Constants.TitleIsRequiredMsg);
+            throw new ValidationException(ValidationMessages.TitleIsRequiredMsg);
         }
 
         if (endAt <= startAt)
         {
-            throw new ValidationException(Constants.EndDateLaterThanStartMsg);
+            throw new ValidationException(ValidationMessages.EndDateLaterThanStartMsg);
         }
 
         if (totalSeats <= 0) 
         {
-            throw new ValidationException(Constants.TotalSeatsAboveZeroMsg);
+            throw new ValidationException(ValidationMessages.TotalSeatsAboveZeroMsg);
         }
     }
 }
