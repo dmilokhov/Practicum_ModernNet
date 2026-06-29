@@ -1,8 +1,8 @@
 using EventManager.Application;
 using EventManager.Infrastructure;
 using EventManager.Infrastructure.Persistence;
-using EventManager.Middleware;
 using EventManager.Web;
+using EventManager.Web.Middleware;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,18 +20,10 @@ if(isDevelopment)
 
 //services
 builder.Services.AddApplication();
-builder.Services.AddInfrastructure();
+builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddPresentation();
 
 builder.Logging.AddConsole();
-
-//Db Context
-var connectionString = builder.Configuration.GetConnectionString("Default")
-                       ?? throw new InvalidOperationException("Connection string 'Default' not found");
-builder.Services.AddDbContext<AppDbContext>(options => options
-    .UseNpgsql(connectionString)
-    .LogTo(Console.WriteLine)
-    .EnableDetailedErrors());
 
 //after build
 var app = builder.Build();

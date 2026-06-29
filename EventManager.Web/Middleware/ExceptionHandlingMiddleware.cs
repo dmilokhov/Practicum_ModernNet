@@ -1,9 +1,9 @@
-using EventManager.Infrastructure;
-using EventManager.Infrastructure.Exceptions;
+using EventManager.Domain.Exceptions;
+using EventManager.Web.Contracts;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 
-namespace EventManager.Middleware
+namespace EventManager.Web.Middleware
 {
     public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
     {

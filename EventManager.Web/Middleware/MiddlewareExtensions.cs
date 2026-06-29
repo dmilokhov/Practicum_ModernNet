@@ -1,4 +1,4 @@
-﻿namespace EventManager.Middleware;
+﻿namespace EventManager.Web.Middleware;
 
 public static class MiddlewareExtensions
 {

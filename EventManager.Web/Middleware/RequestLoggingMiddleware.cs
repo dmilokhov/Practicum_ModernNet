@@ -1,4 +1,4 @@
-﻿namespace EventManager.Middleware;
+﻿namespace EventManager.Web.Middleware;
 
 public class RequestLoggingMiddleware(RequestDelegate next, ILogger<RequestLoggingMiddleware> logger)
 {
