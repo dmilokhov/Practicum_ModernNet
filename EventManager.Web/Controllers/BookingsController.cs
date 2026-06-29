@@ -1,6 +1,6 @@
 ﻿using EventManager.Application.Interfaces.Services;
 using EventManager.Application.Model.DTOs;
-using EventManager.Domain.Constants;
+using EventManager.Web.Constants;
 using EventManager.Web.Contracts;
 using Microsoft.AspNetCore.Mvc;
 

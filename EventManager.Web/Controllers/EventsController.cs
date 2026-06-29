@@ -1,9 +1,8 @@
-﻿using EventManager.Application.Helpers;
-using EventManager.Application.Interfaces;
-using EventManager.Application.Interfaces.Services;
+﻿using EventManager.Application.Interfaces.Services;
 using EventManager.Application.Model.DTOs;
 using EventManager.Application.Model.Filters;
-using EventManager.Domain.Constants;
+using EventManager.Application.Model.Responses;
+using EventManager.Web.Constants;
 using EventManager.Web.Contracts;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,8 +10,7 @@ namespace EventManager.Web.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class EventsController(IEventService eventService, IBookingService bookingService, 
-    ITaskQueue<BookingDto> bookingQueue) : ControllerBase
+public class EventsController(IEventService eventService, IBookingService bookingService) : ControllerBase
 {
     /// <summary>
     /// Get events
@@ -138,10 +136,9 @@ public class EventsController(IEventService eventService, IBookingService bookin
     [Produces("application/json")]
     public async Task<ActionResult<ApiResult>> BookAsync(Guid id, CancellationToken ct = default)
     {
-        var bookingDto = await bookingService.CreateBookingAsync(id, ct);
-        await bookingQueue.EnqueueAsync(bookingDto, ct);
+        var bookingDto = await bookingService.SubmitBookingAsync(id, ct);
 
-        return AcceptedAtRoute(RouteNames.GetBookingIdRoute, new { bookingId = bookingDto.Id }, 
+        return AcceptedAtRoute(RouteNames.GetBookingIdRoute, new { bookingId = bookingDto.Id },
             new ApiResult<BookingDto>
             {
                 Data = bookingDto,

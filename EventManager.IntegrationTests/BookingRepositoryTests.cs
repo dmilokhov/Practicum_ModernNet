@@ -1,4 +1,6 @@
-﻿using EventManager.Application.Model.Factories;
+﻿using EventManager.Application.Interfaces;
+using EventManager.Application.Model.DTOs;
+using EventManager.Application.Model.Factories;
 using EventManager.Application.Services;
 using EventManager.Domain.Entities;
 using EventManager.Domain.Exceptions;
@@ -132,7 +134,7 @@ public class BookingRepositoryTests(PostgreSqlFixture fixture)
         var bookingRepository = new BookingRepository(repositoryContext);
         var eventRepository = new EventRepository(repositoryContext);
 
-        var bookingService = new BookingService(new BookingFactory(), bookingRepository, eventRepository, new EventBookingLockProvider());
+        var bookingService = new BookingService(new BookingFactory(), bookingRepository, eventRepository, new EventBookingLockProvider(), new NoOpTaskQueue());
 
         // Assert
         await bookingService.ConfirmBooking(bookingModel.Id);
@@ -168,7 +170,7 @@ public class BookingRepositoryTests(PostgreSqlFixture fixture)
         var bookingRepository = new BookingRepository(repositoryContext);
         var eventRepository = new EventRepository(repositoryContext);
 
-        var bookingService = new BookingService(new BookingFactory(), bookingRepository, eventRepository, new EventBookingLockProvider());
+        var bookingService = new BookingService(new BookingFactory(), bookingRepository, eventRepository, new EventBookingLockProvider(), new NoOpTaskQueue());
 
         // Assert
         await bookingService.RejectBooking(bookingModel.Id);
@@ -199,4 +201,16 @@ public class BookingRepositoryTests(PostgreSqlFixture fixture)
     }
 
     #endregion
+}
+
+file sealed class NoOpTaskQueue : ITaskQueue<BookingDto>
+{
+    public ValueTask EnqueueAsync(BookingDto bookingDto, CancellationToken ct = default) =>
+        ValueTask.CompletedTask;
+
+    public async IAsyncEnumerable<BookingDto> ReadAllAsync(CancellationToken ct = default)
+    {
+        await Task.CompletedTask;
+        yield break;
+    }
 }

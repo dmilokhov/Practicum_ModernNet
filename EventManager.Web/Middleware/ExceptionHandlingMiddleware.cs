@@ -1,11 +1,13 @@
-using EventManager.Domain.Exceptions;
+using EventManager.Application.Exceptions;
 using EventManager.Web.Contracts;
 using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
 
 namespace EventManager.Web.Middleware
 {
-    public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
+    public class ExceptionHandlingMiddleware(
+        RequestDelegate next,
+        ILogger<ExceptionHandlingMiddleware> logger,
+        IExceptionMapper exceptionMapper)
     {
         public async Task InvokeAsync(HttpContext context)
         {
@@ -30,42 +32,29 @@ namespace EventManager.Web.Middleware
             }
         }
 
-        private static async Task HandleExceptionAsync(HttpContext context, Exception ex)
+        private async Task HandleExceptionAsync(HttpContext context, Exception ex)
         {
             if (context.Response.HasStarted)
             {
                 return;
             }
 
+            var mapping = exceptionMapper.Map(ex);
+
             var apiErrorResponse = new ApiErrorResult
             {
                 Message = "Exception occurred. See Error Details",
-                ErrorDetails = ex switch
-                {
-                    NotFoundException nf => new ProblemDetails
+                ErrorDetails = mapping is not null
+                    ? new ProblemDetails
                     {
-                        Detail = nf.Message,
-                        Status = StatusCodes.Status404NotFound,                       
-                    },
-
-                    NoAvailableSeatsException nas => new ProblemDetails
-                    {
-                        Detail = nas.Message,
-                        Status = StatusCodes.Status409Conflict,
-                    },
-
-                    ValidationException ve => new ProblemDetails
-                    {
-                        Detail = ve.Message,
-                        Status = StatusCodes.Status400BadRequest,
-                    },
-                    
-                    _ => new ProblemDetails
+                        Detail = mapping.Detail,
+                        Status = mapping.StatusCode,
+                    }
+                    : new ProblemDetails
                     {
                         Detail = "Internal server error",
                         Status = StatusCodes.Status500InternalServerError,
                     }
-                }
             };
 
             context.Response.ContentType = "application/json";

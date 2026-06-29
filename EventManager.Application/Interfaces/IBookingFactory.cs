@@ -1,8 +1,8 @@
-﻿using EventManager.Application.Model.DTOs;
+﻿using EventManager.Domain.Entities;
 
 namespace EventManager.Application.Interfaces;
 
 public interface IBookingFactory
 {
-    BookingDto CreateBookingDto(Guid eventId);
+    Booking Create(Guid eventId);
 }

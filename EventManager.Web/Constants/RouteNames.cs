@@ -1,4 +1,4 @@
-﻿namespace EventManager.Domain.Constants;
+﻿namespace EventManager.Web.Constants;
 
 public class RouteNames
 {

@@ -1,6 +1,5 @@
 ﻿using EventManager.Application.Interfaces.Repositories;
 using EventManager.Application.Interfaces.Services;
-using EventManager.Application.Model.Mapping;
 using EventManager.Domain.Entities;
 using EventManager.Domain.Exceptions;
 using EventManager.Infrastructure.Persistence;
@@ -15,8 +14,8 @@ public class ConfirmBookingTests : BookingServiceTestsBase
     public async Task ConfirmBooking_Positive()
     {
         //Arrange
-        var notUpdatedBooking  = BookingFactory.CreateBookingDto(Guid.NewGuid()).ToEntity();
-        var booking = BookingFactory.CreateBookingDto(Guid.NewGuid()).ToEntity();
+        var notUpdatedBooking = BookingFactory.Create(Guid.NewGuid());
+        var booking = BookingFactory.Create(Guid.NewGuid());
        
         using var scope = CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();

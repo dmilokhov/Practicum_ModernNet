@@ -1,4 +1,5 @@
-﻿using EventManager.Application.Interfaces;
+﻿using EventManager.Application.Exceptions;
+using EventManager.Application.Interfaces;
 using EventManager.Application.Interfaces.Services;
 using EventManager.Application.Model.Factories;
 using EventManager.Application.Model.Validators;
@@ -12,6 +13,7 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         services.AddSingleton<IBookingFactory, BookingFactory>();
+        services.AddSingleton<IExceptionMapper, ExceptionMapper>();
 
         services.AddScoped<IEventService, EventService>();
         services.AddScoped<IBookingService, BookingService>();

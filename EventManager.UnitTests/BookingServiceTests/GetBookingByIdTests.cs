@@ -1,5 +1,4 @@
 ﻿using EventManager.Application.Interfaces.Services;
-using EventManager.Application.Model.Mapping;
 using EventManager.Domain.Entities;
 using EventManager.Domain.Exceptions;
 using EventManager.Infrastructure.Persistence;
@@ -14,7 +13,7 @@ public class GetBookingByIdTests : BookingServiceTestsBase
     public async Task GetBookingById_Positive()
     {
         //Arrange
-        var bookingToFind = BookingFactory.CreateBookingDto(Guid.NewGuid()).ToEntity();
+        var bookingToFind = BookingFactory.Create(Guid.NewGuid());
         
         using var scope = CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();

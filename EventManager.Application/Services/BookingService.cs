@@ -12,8 +12,16 @@ namespace EventManager.Application.Services;
 public class BookingService(IBookingFactory bookingFactory,
     IBookingRepository bookingRepository,
     IEventRepository eventRepository,
-    IEventBookingLockProvider lockProvider) : IBookingService
+    IEventBookingLockProvider lockProvider,
+    ITaskQueue<BookingDto> bookingQueue) : IBookingService
 {
+    public async Task<BookingDto> SubmitBookingAsync(Guid eventId, CancellationToken ct = default)
+    {
+        var bookingDto = await CreateBookingAsync(eventId, ct);
+        await bookingQueue.EnqueueAsync(bookingDto, ct);
+        return bookingDto;
+    }
+
     public async Task<BookingDto> CreateBookingAsync(Guid eventId, CancellationToken ct = default)
     {
         using (await lockProvider.AcquireAsync(eventId, ct))
@@ -26,11 +34,11 @@ public class BookingService(IBookingFactory bookingFactory,
                 throw new NoAvailableSeatsException(ExceptionMessages.NoAvailableSeatsExceptionMsg);
             }
 
-            var bookingDto = bookingFactory.CreateBookingDto(eventId);
-            await bookingRepository.AddAsync(bookingDto.ToEntity(), ct);
+            var booking = bookingFactory.Create(eventId);
+            await bookingRepository.AddAsync(booking, ct);
             await bookingRepository.SaveChangesAsync(ct);
 
-            return bookingDto;
+            return booking.ToDto();
         }
     }
 
@@ -38,6 +46,25 @@ public class BookingService(IBookingFactory bookingFactory,
     {
         var bookingEntity = await bookingRepository.GetAsync(bookingId, ct);
         return bookingEntity.ToDto();
+    }
+
+    public async Task ProcessBookingAsync(Guid bookingId, CancellationToken ct = default)
+    {
+        var booking = await bookingRepository.GetAsync(bookingId, ct);
+
+        await Task.Delay(TimeSpan.FromSeconds(2), ct);
+
+        try
+        {
+            await eventRepository.GetAsync(booking.EventId, ct);
+        }
+        catch (EntityNotFoundException ex) when (ex.EntityName == nameof(Event))
+        {
+            await RejectBooking(bookingId, ct);
+            return;
+        }
+
+        await ConfirmBooking(bookingId, ct);
     }
 
     public async Task ConfirmBooking(Guid bookingId, CancellationToken ct = default)

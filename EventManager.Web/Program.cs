@@ -3,7 +3,6 @@ using EventManager.Infrastructure;
 using EventManager.Infrastructure.Persistence;
 using EventManager.Web;
 using EventManager.Web.Middleware;
-using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 var isDevelopment = builder.Environment.IsDevelopment();
@@ -40,11 +39,7 @@ app.UseRequestLogging();
 app.UseHttpsRedirection();
 app.UseRouting();
 
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate();
-}
+app.Services.ApplyMigrations();
 
 app.MapControllers();
 

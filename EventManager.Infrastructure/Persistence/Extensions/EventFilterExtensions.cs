@@ -1,7 +1,7 @@
-﻿using EventManager.Application.Model.Filters;
+using EventManager.Application.Model.Filters;
 using EventManager.Domain.Entities;
 
-namespace EventManager.Application.Helpers;
+namespace EventManager.Infrastructure.Persistence.Extensions;
 
 public static class EventFilterExtensions
 {

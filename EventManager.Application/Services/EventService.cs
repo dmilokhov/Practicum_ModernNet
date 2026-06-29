@@ -1,10 +1,10 @@
-﻿using EventManager.Application.Helpers;
-using EventManager.Application.Interfaces;
+﻿using EventManager.Application.Interfaces;
 using EventManager.Application.Interfaces.Repositories;
 using EventManager.Application.Interfaces.Services;
 using EventManager.Application.Model.DTOs;
 using EventManager.Application.Model.Filters;
 using EventManager.Application.Model.Mapping;
+using EventManager.Application.Model.Responses;
 
 namespace EventManager.Application.Services;
 

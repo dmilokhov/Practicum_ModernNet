@@ -1,8 +1,8 @@
-﻿using EventManager.Application.Helpers;
-using EventManager.Application.Interfaces.Repositories;
+﻿using EventManager.Application.Interfaces.Repositories;
 using EventManager.Application.Model.Filters;
 using EventManager.Domain.Entities;
 using EventManager.Domain.Exceptions;
+using EventManager.Infrastructure.Persistence.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace EventManager.Infrastructure.Persistence.Repositories;
