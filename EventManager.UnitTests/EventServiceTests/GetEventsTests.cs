@@ -1,7 +1,9 @@
-﻿using EventManager.DataAccess;
-using EventManager.Features.Events.Interfaces;
-using EventManager.Features.Events.Model;
-using EventManager.Infrastructure.Constants;
+﻿using EventManager.Application.Interfaces.Services;
+using EventManager.Application.Model.Filters;
+using EventManager.Domain.Constants;
+using EventManager.Domain.Entities;
+using EventManager.Domain.Exceptions;
+using EventManager.Infrastructure.Persistence;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using System.ComponentModel.DataAnnotations;
@@ -229,11 +231,11 @@ public class GetEventsTests : EventServiceTestsBase
 
     public static IEnumerable<object[]> GetFilterNegativeTestData()
     {
-        yield return [new EventFilter { Page = -2 }, Constants.PageMustBeAboveOrEqualOne];
-        yield return [new EventFilter { PageSize = 0 }, Constants.PageSizeMustBeAboveOrEqualOne];
-        yield return [new EventFilter { Title = " " }, Constants.TitleFilterWithoutSpacesMsg];
-        yield return [new EventFilter { Title = "    " }, Constants.TitleFilterWithoutSpacesMsg];
-        yield return [new EventFilter { From = BaseTestEndDate, To = BaseTestStartDate }, Constants.EndDateLaterThanStartMsg];
+        yield return [new EventFilter { Page = -2 }, ValidationMessages.PageMustBeAboveOrEqualOne];
+        yield return [new EventFilter { PageSize = 0 }, ValidationMessages.PageSizeMustBeAboveOrEqualOne];
+        yield return [new EventFilter { Title = " " }, ValidationMessages.TitleFilterWithoutSpacesMsg];
+        yield return [new EventFilter { Title = "    " }, ValidationMessages.TitleFilterWithoutSpacesMsg];
+        yield return [new EventFilter { From = BaseTestEndDate, To = BaseTestStartDate }, ValidationMessages.EndDateLaterThanStartMsg];
     }
 
     [Theory]
@@ -248,6 +250,6 @@ public class GetEventsTests : EventServiceTestsBase
         var action = async () => await eventService.GetEventsAsync(filter);
 
         //Assert
-        await action.Should().ThrowAsync<ValidationException>().WithMessage(expectedExceptionMessage);
+        await action.Should().ThrowAsync<DomainValidationException>().WithMessage(expectedExceptionMessage);
     }
 }

@@ -1,7 +1,7 @@
-﻿using EventManager.DataAccess;
-using EventManager.Features.Bookings.Interfaces;
-using EventManager.Features.Bookings.Model;
-using EventManager.Infrastructure.Exceptions;
+﻿using EventManager.Application.Interfaces.Services;
+using EventManager.Domain.Entities;
+using EventManager.Domain.Exceptions;
+using EventManager.Infrastructure.Persistence;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -13,7 +13,7 @@ public class GetBookingByIdTests : BookingServiceTestsBase
     public async Task GetBookingById_Positive()
     {
         //Arrange
-        var bookingToFind = BookingFactory.CreateBookingDto(Guid.NewGuid()).ToEntity();
+        var bookingToFind = BookingFactory.Create(Guid.NewGuid());
         
         using var scope = CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();

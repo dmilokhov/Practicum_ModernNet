@@ -1,10 +1,9 @@
-﻿using EventManager.DataAccess;
-using EventManager.Features.Bookings.Interfaces;
-using EventManager.Features.Bookings.Model;
-using EventManager.Features.Events.Interfaces;
-using EventManager.Features.Events.Model;
-using EventManager.Infrastructure.Constants;
-using EventManager.Infrastructure.Exceptions;
+﻿using EventManager.Application.Interfaces.Repositories;
+using EventManager.Application.Interfaces.Services;
+using EventManager.Domain.Constants;
+using EventManager.Domain.Entities;
+using EventManager.Domain.Exceptions;
+using EventManager.Infrastructure.Persistence;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -148,6 +147,6 @@ public class CreateBookingTests : BookingServiceTestsBase
         };
 
         //Assert
-        await action.Should().ThrowAsync<NoAvailableSeatsException>().WithMessage(Constants.NoAvailableSeatsExceptionMsg);
+        await action.Should().ThrowAsync<NoAvailableSeatsException>().WithMessage(ExceptionMessages.NoAvailableSeatsExceptionMsg);
     }
 }

@@ -1,8 +1,8 @@
-﻿using EventManager.DataAccess;
-using EventManager.Features.Bookings.Interfaces;
-using EventManager.Features.Bookings.Model;
-using EventManager.Features.Events.Model;
-using EventManager.Infrastructure.Exceptions;
+﻿using EventManager.Application.Interfaces.Repositories;
+using EventManager.Application.Interfaces.Services;
+using EventManager.Domain.Entities;
+using EventManager.Domain.Exceptions;
+using EventManager.Infrastructure.Persistence;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -14,8 +14,8 @@ public class ConfirmBookingTests : BookingServiceTestsBase
     public async Task ConfirmBooking_Positive()
     {
         //Arrange
-        var notUpdatedBooking  = BookingFactory.CreateBookingDto(Guid.NewGuid()).ToEntity();
-        var booking = BookingFactory.CreateBookingDto(Guid.NewGuid()).ToEntity();
+        var notUpdatedBooking = BookingFactory.Create(Guid.NewGuid());
+        var booking = BookingFactory.Create(Guid.NewGuid());
        
         using var scope = CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();

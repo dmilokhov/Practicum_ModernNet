@@ -1,5 +1,73 @@
-# EventManager API V1
-Small ASP.NET Core Web API - Events Manager. Education project - performs only CRUD operations.
+# EventManager API
+
+EventManager - учебный ASP.NET Core Web API для управления событиями и бронированиями.
+
+Проект переведен на чистую архитектуру и разделен на несколько слоев: `Domain`, `Application`, `Infrastructure` и `Web`.
+
+## Структура проекта
+
+```text
+EventManager.sln
+├── EventManager.Domain
+├── EventManager.Application
+├── EventManager.Infrastructure
+├── EventManager.Web
+├── EventManager.UnitTests
+└── EventManager.IntegrationTests
+```
+
+### `EventManager.Domain`
+
+Доменный слой. Не зависит от остальных проектов.
+
+Содержит:
+- сущности предметной области: `Event`, `Booking`;
+- доменные исключения;
+- доменные константы и сообщения валидации;
+- правила, которые относятся к состоянию сущностей, например резервирование и освобождение мест.
+
+### `EventManager.Application`
+
+Слой бизнес-сценариев приложения. Зависит от `Domain`.
+
+Содержит:
+- сервисы приложения: `EventService`, `BookingService`;
+- интерфейсы репозиториев и инфраструктурных сервисов;
+- DTO, фильтры, ответы и маппинг;
+- фабрики, валидаторы и маппер исключений.
+
+Этот слой описывает, что делает приложение, но не знает, как именно данные хранятся или как запросы приходят извне.
+
+### `EventManager.Infrastructure`
+
+Инфраструктурный слой. Зависит от `Application` и `Domain`.
+
+Содержит:
+- `AppDbContext`;
+- конфигурации EF Core;
+- миграции EF Core;
+- реализации репозиториев;
+- in-memory очередь задач;
+- фоновой сервис обработки бронирований;
+- провайдер блокировок для конкурентного бронирования.
+
+### `EventManager.Web`
+
+Входной слой приложения. Зависит от `Application` и `Infrastructure`.
+
+Содержит:
+- `Program.cs` и настройку DI;
+- HTTP-контроллеры;
+- middleware для обработки ошибок и логирования запросов;
+- API-контракты;
+- настройки приложения в `appsettings.json`.
+
+Именно этот проект запускается как Web API.
+
+### Тестовые проекты
+
+- `EventManager.UnitTests` - unit-тесты сервисов приложения.
+- `EventManager.IntegrationTests` - интеграционные тесты репозиториев и базы данных через PostgreSQL/Testcontainers.
 
 ## API
 - GET /events — получить список событий
@@ -182,21 +250,12 @@ API кладет заявку в in-memory очередь, затем фонов
 Создать новую миграцию после изменения моделей:
 
 ```bash
-cd EventManager
-dotnet ef migrations add <MigrationName> --output-dir Migrations
-```
-
-Применить миграции вручную (например, без запуска API):
-
-```bash
-cd EventManager
-dotnet ef database update
+dotnet ef migrations add <MigrationName> -p EventManager.Infrastructure -s EventManager.Web
 ```
 
 Запуск API:
 
 ```bash
-cd EventManager
 dotnet restore
 dotnet build
 dotnet run --launch-profile https
@@ -216,23 +275,22 @@ dotnet run --launch-profile https
 PostgreSQL и Docker не требуются.
 
 ```bash
-cd EventManager
-dotnet test ..\EventManagerTests\EventManager.UnitTests.csproj
+cd EventManager.UnitTests
+dotnet test
 ```
 
 ### Integration-тесты
 Для запуска нужен **Docker** (Docker Desktop или Docker Engine): Testcontainers поднимает контейнер `postgres:16-alpine` на время прогона тестов. Локальный PostgreSQL для integration-тестов настраивать не нужно.
 
 ```bash
-cd EventManager
-dotnet test ..\EventManager.IntegrationTests\EventManager.IntegrationTests.csproj
+cd EventManager.IntegrationTests
+dotnet test
 ```
 
 Запустить все тесты:
 
 ```bash
-cd EventManager
-dotnet test EventManager.sln
+dotnet test
 ```
 
 ## Swagger

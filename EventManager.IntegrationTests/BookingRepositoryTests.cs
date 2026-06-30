@@ -1,11 +1,15 @@
-﻿using EventManager.Features.Bookings;
-using EventManager.Features.Bookings.Model;
-using EventManager.Features.Events;
-using EventManager.Features.Events.Model;
-using EventManager.Infrastructure.Exceptions;
+﻿using EventManager.Application.Interfaces;
+using EventManager.Application.Model.DTOs;
+using EventManager.Application.Model.Factories;
+using EventManager.Application.Services;
+using EventManager.Domain.Entities;
+using EventManager.Domain.Exceptions;
+using EventManager.Infrastructure.Persistence.Repositories;
+using EventManager.Infrastructure.Services;
 using EventManager.IntegrationTests.Infrastructure;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using System.Runtime.CompilerServices;
 
 namespace EventManager.IntegrationTests;
 
@@ -131,7 +135,7 @@ public class BookingRepositoryTests(PostgreSqlFixture fixture)
         var bookingRepository = new BookingRepository(repositoryContext);
         var eventRepository = new EventRepository(repositoryContext);
 
-        var bookingService = new BookingService(new BookingFactory(), bookingRepository, eventRepository, new EventBookingLockProvider());
+        var bookingService = new BookingService(new BookingFactory(), bookingRepository, eventRepository, new EventBookingLockProvider(), new NoOpTaskQueue());
 
         // Assert
         await bookingService.ConfirmBooking(bookingModel.Id);
@@ -167,7 +171,7 @@ public class BookingRepositoryTests(PostgreSqlFixture fixture)
         var bookingRepository = new BookingRepository(repositoryContext);
         var eventRepository = new EventRepository(repositoryContext);
 
-        var bookingService = new BookingService(new BookingFactory(), bookingRepository, eventRepository, new EventBookingLockProvider());
+        var bookingService = new BookingService(new BookingFactory(), bookingRepository, eventRepository, new EventBookingLockProvider(), new NoOpTaskQueue());
 
         // Assert
         await bookingService.RejectBooking(bookingModel.Id);
@@ -198,4 +202,16 @@ public class BookingRepositoryTests(PostgreSqlFixture fixture)
     }
 
     #endregion
+}
+
+file sealed class NoOpTaskQueue : ITaskQueue<BookingDto>
+{
+    public ValueTask EnqueueAsync(BookingDto bookingDto, CancellationToken ct = default) =>
+        ValueTask.CompletedTask;
+
+    public async IAsyncEnumerable<BookingDto> ReadAllAsync([EnumeratorCancellation] CancellationToken ct = default)
+    {
+        await Task.CompletedTask;
+        yield break;
+    }
 }

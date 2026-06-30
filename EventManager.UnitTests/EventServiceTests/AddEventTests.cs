@@ -1,5 +1,7 @@
-﻿using EventManager.Features.Events.Interfaces;
-using EventManager.Features.Events.Model;
+﻿using EventManager.Application.Interfaces.Repositories;
+using EventManager.Application.Interfaces.Services;
+using EventManager.Application.Model.DTOs;
+using EventManager.Domain.Exceptions;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using System.ComponentModel.DataAnnotations;
@@ -50,6 +52,6 @@ public class AddEventTests : EventServiceTestsBase
         var action = async () => await eventService.AddEventAsync(eventDto);
 
         //Assert
-        await action.Should().ThrowAsync<ValidationException>().WithMessage(expectedExceptionMessage);
+        await action.Should().ThrowAsync<DomainValidationException>().WithMessage(expectedExceptionMessage);
     }
 }

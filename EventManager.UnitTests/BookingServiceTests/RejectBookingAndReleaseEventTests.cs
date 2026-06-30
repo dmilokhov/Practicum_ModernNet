@@ -1,9 +1,8 @@
-﻿using EventManager.DataAccess;
-using EventManager.Features.Bookings.Interfaces;
-using EventManager.Features.Bookings.Model;
-using EventManager.Features.Events.Interfaces;
-using EventManager.Features.Events.Model;
-using EventManager.Infrastructure.Exceptions;
+﻿using EventManager.Application.Interfaces.Repositories;
+using EventManager.Application.Interfaces.Services;
+using EventManager.Domain.Entities;
+using EventManager.Domain.Exceptions;
+using EventManager.Infrastructure.Persistence;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -31,7 +30,7 @@ public class RejectBookingAndReleaseEventTests : BookingServiceTestsBase
 
         typeof(Event).GetProperty(nameof(Event.AvailableSeats))!.SetValue(someEvent, 99);
 
-        var updatedBooking = BookingFactory.CreateBookingDto(someEvent.Id).ToEntity();
+        var updatedBooking = BookingFactory.Create(someEvent.Id);
 
         await dbContext.Events.AddAsync(someEvent);
         await dbContext.Bookings.AddAsync(updatedBooking);
@@ -76,7 +75,7 @@ public class RejectBookingAndReleaseEventTests : BookingServiceTestsBase
         var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        var updatedBooking = BookingFactory.CreateBookingDto(Guid.NewGuid()).ToEntity();
+        var updatedBooking = BookingFactory.Create(Guid.NewGuid());
         var expectedExceptionMessage = $"{nameof(Event)} {updatedBooking.EventId} is not found";
 
         await dbContext.Bookings.AddAsync(updatedBooking);

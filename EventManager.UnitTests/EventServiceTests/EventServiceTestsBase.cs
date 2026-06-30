@@ -1,8 +1,12 @@
-﻿using EventManager.DataAccess;
-using EventManager.Features.Events;
-using EventManager.Features.Events.Interfaces;
-using EventManager.Features.Events.Model;
-using EventManager.Infrastructure.Constants;
+﻿using EventManager.Application.Interfaces;
+using EventManager.Application.Interfaces.Repositories;
+using EventManager.Application.Interfaces.Services;
+using EventManager.Application.Model.DTOs;
+using EventManager.Application.Model.Validators;
+using EventManager.Application.Services;
+using EventManager.Domain.Constants;
+using EventManager.Infrastructure.Persistence;
+using EventManager.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -26,7 +30,7 @@ public abstract class EventServiceTestsBase : IDisposable
                 EndAt = BaseTestEndDate,
                 TotalSeats = BaseTotalSeats
             },
-            Constants.TitleIsRequiredMsg
+            ValidationMessages.TitleIsRequiredMsg
         ];
 
         yield return [ new EventDto
@@ -37,7 +41,7 @@ public abstract class EventServiceTestsBase : IDisposable
                 EndAt = BaseTestEndDate,
                 TotalSeats = BaseTotalSeats
             },
-            Constants.TitleIsRequiredMsg
+            ValidationMessages.TitleIsRequiredMsg
         ];
 
         yield return [ new EventDto
@@ -48,7 +52,7 @@ public abstract class EventServiceTestsBase : IDisposable
                 EndAt = BaseTestStartDate,
                 TotalSeats = BaseTotalSeats
             },
-            Constants.EndDateLaterThanStartMsg
+            ValidationMessages.EndDateLaterThanStartMsg
         ];
 
         yield return [ new EventDto
@@ -59,7 +63,7 @@ public abstract class EventServiceTestsBase : IDisposable
                 EndAt = BaseTestEndDate,
                 TotalSeats = 0
             },
-            Constants.TotalSeatsAboveZeroMsg
+            ValidationMessages.TotalSeatsAboveZeroMsg
         ];
     }
 
