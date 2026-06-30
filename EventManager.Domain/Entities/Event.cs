@@ -1,4 +1,5 @@
 using EventManager.Domain.Constants;
+using EventManager.Domain.Exceptions;
 using System.ComponentModel.DataAnnotations;
 
 namespace EventManager.Domain.Entities;
@@ -71,17 +72,17 @@ public class Event
     {
         if(string.IsNullOrWhiteSpace(title))
         {
-            throw new ValidationException(ValidationMessages.TitleIsRequiredMsg);
+            throw new DomainValidationException(ValidationMessages.TitleIsRequiredMsg);
         }
 
         if (endAt <= startAt)
         {
-            throw new ValidationException(ValidationMessages.EndDateLaterThanStartMsg);
+            throw new DomainValidationException(ValidationMessages.EndDateLaterThanStartMsg);
         }
 
         if (totalSeats <= 0) 
         {
-            throw new ValidationException(ValidationMessages.TotalSeatsAboveZeroMsg);
+            throw new DomainValidationException(ValidationMessages.TotalSeatsAboveZeroMsg);
         }
     }
 }

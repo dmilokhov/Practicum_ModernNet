@@ -1,4 +1,4 @@
-using EventManager.Application.Exceptions;
+using EventManager.Application.Interfaces;
 using EventManager.Web.Contracts;
 using Microsoft.AspNetCore.Mvc;
 

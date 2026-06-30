@@ -2,6 +2,7 @@
 using EventManager.Application.Model.Filters;
 using EventManager.Domain.Constants;
 using EventManager.Domain.Entities;
+using EventManager.Domain.Exceptions;
 using EventManager.Infrastructure.Persistence;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
@@ -249,6 +250,6 @@ public class GetEventsTests : EventServiceTestsBase
         var action = async () => await eventService.GetEventsAsync(filter);
 
         //Assert
-        await action.Should().ThrowAsync<ValidationException>().WithMessage(expectedExceptionMessage);
+        await action.Should().ThrowAsync<DomainValidationException>().WithMessage(expectedExceptionMessage);
     }
 }

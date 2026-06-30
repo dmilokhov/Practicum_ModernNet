@@ -1,6 +1,8 @@
+using EventManager.Application.Interfaces;
+using EventManager.Web.Contracts;
+using EventManager.Web.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using System.Reflection;
-using EventManager.Web.Contracts;
 
 namespace EventManager.Web;
 
@@ -8,6 +10,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddPresentation(this IServiceCollection services)
     {
+        services.AddSingleton<IExceptionMapper, ExceptionMapper>();
+
         services.AddControllers().ConfigureApiBehaviorOptions(options =>
         {
             options.InvalidModelStateResponseFactory = context =>

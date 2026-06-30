@@ -81,6 +81,6 @@ public class UpdateEventTests : EventServiceTestsBase
         var action = async () => await eventService.UpdateEventAsync(someId, eventDto);
 
         //Assert
-        await action.Should().ThrowAsync<ValidationException>().WithMessage(expectedExceptionMessage);
+        await action.Should().ThrowAsync<DomainValidationException>().WithMessage(expectedExceptionMessage);
     }
 }

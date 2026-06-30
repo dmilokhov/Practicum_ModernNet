@@ -9,6 +9,7 @@ using EventManager.Infrastructure.Services;
 using EventManager.IntegrationTests.Infrastructure;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using System.Runtime.CompilerServices;
 
 namespace EventManager.IntegrationTests;
 
@@ -208,7 +209,7 @@ file sealed class NoOpTaskQueue : ITaskQueue<BookingDto>
     public ValueTask EnqueueAsync(BookingDto bookingDto, CancellationToken ct = default) =>
         ValueTask.CompletedTask;
 
-    public async IAsyncEnumerable<BookingDto> ReadAllAsync(CancellationToken ct = default)
+    public async IAsyncEnumerable<BookingDto> ReadAllAsync([EnumeratorCancellation] CancellationToken ct = default)
     {
         await Task.CompletedTask;
         yield break;

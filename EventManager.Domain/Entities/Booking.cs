@@ -1,4 +1,5 @@
 ﻿using EventManager.Domain.Constants;
+using EventManager.Domain.Exceptions;
 using System.ComponentModel.DataAnnotations;
 
 namespace EventManager.Domain.Entities;
@@ -32,7 +33,7 @@ public class Booking
 
         if (processedAt.Value < CreatedAt)
         {
-            throw new ValidationException(ValidationMessages.ProcessedDateLaterThanCreatedMsg);
+            throw new DomainValidationException(ValidationMessages.ProcessedDateLaterThanCreatedMsg);
         }
 
         ProcessedAt = processedAt;
