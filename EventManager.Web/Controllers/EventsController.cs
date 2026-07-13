@@ -124,19 +124,20 @@ public class EventsController(IEventService eventService, IBookingService bookin
     /// <summary>
     /// Event booking
     /// </summary>
-    /// <param name="id">Guid - id of an event to book</param>
+    /// <param name="eventId">Guid - id of an event to book</param>
+    /// /// <param name="userId">Guid - id of a user</param>
     /// <param name="ct">(optional) - cancellation token</param>
     /// <response code="202">Returns JSON ApiResult with accepted status</response>
     /// <response code="404">Returns JSON ApiErrorResult with corresponding message if event not found</response>
     /// <response code="409">Returns JSON ApiErrorResult with corresponding message if there are no available seats for an event</response>
-    [HttpPost("{id:guid}/book")]
+    [HttpPost("{eventId:guid}/book")]
     [ProducesResponseType(typeof(ApiResult), StatusCodes.Status202Accepted)]
     [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status409Conflict)]
     [Produces("application/json")]
-    public async Task<ActionResult<ApiResult>> BookAsync(Guid id, CancellationToken ct = default)
+    public async Task<ActionResult<ApiResult>> BookAsync(Guid eventId, Guid userId, CancellationToken ct = default)
     {
-        var bookingDto = await bookingService.SubmitBookingAsync(id, ct);
+        var bookingDto = await bookingService.SubmitBookingAsync(eventId, userId, ct);
 
         return AcceptedAtRoute(RouteNames.GetBookingIdRoute, new { bookingId = bookingDto.Id },
             new ApiResult<BookingDto>

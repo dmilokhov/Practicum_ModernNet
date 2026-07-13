@@ -1,5 +1,5 @@
 ﻿using EventManager.Domain.Constants;
-using EventManager.Domain.Entities;
+using EventManager.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace EventManager.Application.Model.DTOs;
@@ -13,7 +13,7 @@ public class BookingDto
     public required Guid EventId { get; set; }
 
     [Required(ErrorMessage = ValidationMessages.BookingStatusIsRequiredMsg)]
-    public BookingStatus Status { get; set; }
+    public BookingStatuses Status { get; set; }
 
     [Required(ErrorMessage = ValidationMessages.CreatedAtIsRequiredMsg)]
     public DateTime? CreatedAt { get; set; }

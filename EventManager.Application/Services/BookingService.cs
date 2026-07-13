@@ -5,6 +5,7 @@ using EventManager.Application.Model.DTOs;
 using EventManager.Application.Model.Mapping;
 using EventManager.Domain.Constants;
 using EventManager.Domain.Entities;
+using EventManager.Domain.Enums;
 using EventManager.Domain.Exceptions;
 
 namespace EventManager.Application.Services;
@@ -15,14 +16,14 @@ public class BookingService(IBookingFactory bookingFactory,
     IEventBookingLockProvider lockProvider,
     ITaskQueue<BookingDto> bookingQueue) : IBookingService
 {
-    public async Task<BookingDto> SubmitBookingAsync(Guid eventId, CancellationToken ct = default)
+    public async Task<BookingDto> SubmitBookingAsync(Guid eventId, Guid userId, CancellationToken ct = default)
     {
-        var bookingDto = await CreateBookingAsync(eventId, ct);
+        var bookingDto = await CreateBookingAsync(eventId, userId, ct);
         await bookingQueue.EnqueueAsync(bookingDto, ct);
         return bookingDto;
     }
 
-    public async Task<BookingDto> CreateBookingAsync(Guid eventId, CancellationToken ct = default)
+    public async Task<BookingDto> CreateBookingAsync(Guid eventId, Guid userId, CancellationToken ct = default)
     {
         using (await lockProvider.AcquireAsync(eventId, ct))
         {
@@ -34,7 +35,7 @@ public class BookingService(IBookingFactory bookingFactory,
                 throw new NoAvailableSeatsException(ExceptionMessages.NoAvailableSeatsExceptionMsg);
             }
 
-            var booking = bookingFactory.Create(eventId);
+            var booking = bookingFactory.Create(eventId, userId);
             await bookingRepository.AddAsync(booking, ct);
             await bookingRepository.SaveChangesAsync(ct);
 
@@ -60,26 +61,12 @@ public class BookingService(IBookingFactory bookingFactory,
         }
         catch (EntityNotFoundException ex) when (ex.EntityName == nameof(Event))
         {
-            await RejectBooking(bookingId, ct);
+            booking.Reject();
+            await bookingRepository.SaveChangesAsync(ct);
             return;
         }
 
-        await ConfirmBooking(bookingId, ct);
-    }
-
-    public async Task ConfirmBooking(Guid bookingId, CancellationToken ct = default)
-    {
-        var bookingEntity = await bookingRepository.GetAsync(bookingId, ct);
-        bookingEntity.Update(BookingStatus.Confirmed, DateTime.UtcNow);
-
-        await bookingRepository.SaveChangesAsync(ct);
-    }
-
-    public async Task RejectBooking(Guid bookingId, CancellationToken ct = default)
-    {
-        var bookingEntity = await bookingRepository.GetAsync(bookingId, ct);
-        bookingEntity.Update(BookingStatus.Rejected, DateTime.UtcNow);
-
+        booking.Confirm();
         await bookingRepository.SaveChangesAsync(ct);
     }
 
@@ -91,7 +78,7 @@ public class BookingService(IBookingFactory bookingFactory,
         {
             var eventToUpdate = await eventRepository.GetAsync(bookingEntity.EventId, ct);
             eventToUpdate.ReleaseSeats();
-            bookingEntity.Update(BookingStatus.Rejected, DateTime.UtcNow);
+            bookingEntity.Reject();
             await bookingRepository.SaveChangesAsync(ct);
         }
     }
