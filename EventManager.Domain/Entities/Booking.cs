@@ -12,7 +12,6 @@ public class Booking
     public DateTime? ProcessedAt { get; private set; }
     public Guid EventId { get; init; }
     public Event Event { get; init; } = null!;
-
     public Guid UserId { get; init; }
     public User User { get; init; } = null!;
 

@@ -1,11 +1,14 @@
 ﻿using EventManager.Application.Interfaces;
 using EventManager.Application.Interfaces.Repositories;
 using EventManager.Application.Interfaces.Services;
+using EventManager.Application.Interfaces.Services.Security;
 using EventManager.Application.Model.DTOs;
 using EventManager.Infrastructure.Persistence;
 using EventManager.Infrastructure.Persistence.Repositories;
 using EventManager.Infrastructure.Queue;
 using EventManager.Infrastructure.Services;
+using EventManager.Infrastructure.Services.Security;
+using EventManager.Infrastructure.Settings;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,6 +24,7 @@ public static class DependencyInjection
 
         services.AddScoped<IEventRepository, EventRepository>();
         services.AddScoped<IBookingRepository, BookingRepository>();
+        services.AddScoped<IJwtTokenService, JwtTokenService>();
 
         services.AddHostedService<BookingBackgroundService>();
 
@@ -31,6 +35,9 @@ public static class DependencyInjection
             .UseNpgsql(connectionString)
             .LogTo(Console.WriteLine)
             .EnableDetailedErrors());
+
+        //Settings
+        services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
 
         return services;
     }
