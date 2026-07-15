@@ -1,6 +1,8 @@
-﻿using EventManager.Application.Interfaces;
+﻿using EventManager.Application.Commands;
+using EventManager.Application.Interfaces;
 using EventManager.Application.Interfaces.Repositories;
 using EventManager.Application.Interfaces.Services;
+using EventManager.Application.Interfaces.Services.Validation;
 using EventManager.Application.Model.DTOs;
 using EventManager.Application.Model.Mapping;
 using EventManager.Domain.Constants;
@@ -10,37 +12,31 @@ using EventManager.Domain.Exceptions;
 
 namespace EventManager.Application.Services;
 
-public class BookingService(IBookingFactory bookingFactory,
+public class BookingService(
+    ISubmitBookingValidator validator,
+    IBookingFactory bookingFactory,
     IBookingRepository bookingRepository,
     IEventRepository eventRepository,
     IEventBookingLockProvider lockProvider,
     ITaskQueue<BookingDto> bookingQueue) : IBookingService
 {
-    public async Task<BookingDto> SubmitBookingAsync(Guid eventId, Guid userId, CancellationToken ct = default)
+    public async Task<BookingDto> SubmitBookingAsync(SubmitBookingCommand command, CancellationToken ct = default)
     {
-        var bookingDto = await CreateBookingAsync(eventId, userId, ct);
+        var bookingDto = await CreateBookingAsync(command, ct);
         await bookingQueue.EnqueueAsync(bookingDto, ct);
         return bookingDto;
     }
 
-    public async Task<BookingDto> CreateBookingAsync(Guid eventId, Guid userId, CancellationToken ct = default)
+    public async Task CancelBookingAsync(CancelBookingCommand command, CancellationToken ct = default)
     {
-        using (await lockProvider.AcquireAsync(eventId, ct))
+        var bookingEntity = await bookingRepository.GetAsync(command.BookingId, ct);
+
+        if(command.UserRole == Roles.User && bookingEntity.UserId != command.UserId)
         {
-            var eventForBooking = await eventRepository.GetAsync(eventId, ct);
+            throw new OperationNotAllowedException(ExceptionMessages.UserCanCancelOnlyHisBookingsMsg);
+        }    
 
-            var reserved = eventForBooking.TryReserveSeats();
-            if (!reserved)
-            {
-                throw new NoAvailableSeatsException(ExceptionMessages.NoAvailableSeatsExceptionMsg);
-            }
-
-            var booking = bookingFactory.Create(eventId, userId);
-            await bookingRepository.AddAsync(booking, ct);
-            await bookingRepository.SaveChangesAsync(ct);
-
-            return booking.ToDto();
-        }
+        bookingEntity.Cancel();
     }
 
     public async Task<BookingDto> GetBookingByIdAsync(Guid bookingId, CancellationToken ct = default)
@@ -80,6 +76,20 @@ public class BookingService(IBookingFactory bookingFactory,
             eventToUpdate.ReleaseSeats();
             bookingEntity.Reject();
             await bookingRepository.SaveChangesAsync(ct);
+        }
+    }
+
+    private async Task<BookingDto> CreateBookingAsync(SubmitBookingCommand command, CancellationToken ct = default)
+    {
+        using (await lockProvider.AcquireAsync(command.EventId, ct))
+        {
+            await validator.ValidateAsync(command, ct);
+
+            var booking = bookingFactory.Create(command.EventId, command.UserId);
+            await bookingRepository.AddAsync(booking, ct);
+            await bookingRepository.SaveChangesAsync(ct);
+
+            return booking.ToDto();
         }
     }
 }

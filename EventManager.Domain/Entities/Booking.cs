@@ -43,7 +43,7 @@ public class Booking
         }
 
         Status = status;
-        ProcessedAt = DateTime.Now;
+        ProcessedAt = DateTime.UtcNow;
     }
 }
 
