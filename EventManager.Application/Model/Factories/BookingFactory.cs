@@ -1,4 +1,4 @@
-﻿using EventManager.Application.Interfaces;
+﻿using EventManager.Application.Interfaces.Factories;
 using EventManager.Domain.Entities;
 using EventManager.Domain.Enums;
 

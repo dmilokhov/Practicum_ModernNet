@@ -1,5 +1,6 @@
 ﻿using EventManager.Application.Commands;
 using EventManager.Application.Interfaces;
+using EventManager.Application.Interfaces.Factories;
 using EventManager.Application.Interfaces.Repositories;
 using EventManager.Application.Interfaces.Services;
 using EventManager.Application.Interfaces.Services.Validation;

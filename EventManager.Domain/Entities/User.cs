@@ -12,9 +12,8 @@ public class User
     public List<Booking> Bookings { get; private set; } = null!;
 
     public User() {}
-    public User(string login, string passwordHash, Roles role)
+    public User(Guid id, string login, string passwordHash, Roles role)
     {
-        Id = Guid.NewGuid();
         Login = login;
         PasswordHash = passwordHash;
         Role = role;

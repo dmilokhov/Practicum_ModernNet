@@ -5,10 +5,15 @@ public class EntityNotFoundException : NotFoundException
     public string EntityName { get; }
     public Guid EventId { get; }
 
-    public EntityNotFoundException(string entityName, Guid eventId) : base($"{entityName} {eventId} is not found")
+    public EntityNotFoundException(string entityName) : base($"{entityName} is not found")
     {
         EntityName = entityName;
-        EventId = eventId;
+    }
+
+    public EntityNotFoundException(string entityName, Guid entityId) : base($"{entityName} {entityId} is not found")
+    {
+        EntityName = entityName;
+        EventId = entityId;
     }
 
     public EntityNotFoundException(string entityName, Guid eventId, Exception inner) 

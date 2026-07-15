@@ -12,6 +12,33 @@ public class UserRepository(AppDbContext context) : IUserRepository
         return await TryGetUserAsync(id, ct);
     }
 
+    public async Task<User> GetByLoginAsync(string login, CancellationToken ct = default)
+    {
+        var foundUser = await context.Users.FirstOrDefaultAsync(e => e.Login == login, ct);
+
+        if (foundUser is null)
+        {
+            throw new EntityNotFoundException(nameof(User));
+        }
+
+        return foundUser;
+    }
+
+    public async Task<bool> IsUserExistAsync(string login, CancellationToken ct = default)
+    {
+        return await context.Users.AnyAsync(u => u.Login == login, ct);
+    }
+
+    public async Task AddAsync(User userEntity, CancellationToken ct = default)
+    {
+        await context.Users.AddAsync(userEntity, ct);
+    }
+
+    public async Task SaveChangesAsync(CancellationToken ct = default)
+    {
+        await context.SaveChangesAsync(ct);
+    }
+
     private async Task<User> TryGetUserAsync(Guid id, CancellationToken ct = default)
     {
         var foundUser = await context.Users.FirstOrDefaultAsync(e => e.Id == id, ct);

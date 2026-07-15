@@ -1,6 +1,6 @@
 ﻿namespace EventManager.Application.Interfaces.Services.Security;
 
-public interface IPasswordHasher
+public interface IPasswordHasherService
 {
     /// <summary>
     ///  Hash a password using SHA-256

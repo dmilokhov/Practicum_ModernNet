@@ -1,4 +1,5 @@
 ﻿using EventManager.Application.Interfaces;
+using EventManager.Application.Interfaces.Factories;
 using EventManager.Application.Interfaces.Services;
 using EventManager.Application.Interfaces.Services.Validation;
 using EventManager.Application.Model.Factories;
@@ -17,6 +18,7 @@ public static class DependencyInjection
 
         services.AddScoped<IEventService, EventService>();
         services.AddScoped<IBookingService, BookingService>();
+        services.AddScoped<ILoginService, LoginService>();
 
         services.AddScoped<ISubmitBookingValidator, SubmitBookingValidator>();
 

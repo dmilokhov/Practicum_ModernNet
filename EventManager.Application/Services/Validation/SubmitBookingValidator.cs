@@ -26,7 +26,8 @@ public class SubmitBookingValidator(IEventRepository eventRepository, IUserRepos
 
         if(user.Bookings.Count >= Limitations.MaxUserBookingAmount)
         {
-            throw new BookingLimitOverflowException(ExceptionMessages.BookingLimitOverflowExceptionMsg);
+            throw new BookingLimitOverflowException(
+                ExceptionMessages.BookingLimitOverflowExceptionMsg(Limitations.MaxUserBookingAmount));
         }
             
     }

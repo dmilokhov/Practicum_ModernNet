@@ -1,4 +1,5 @@
 ﻿using EventManager.Application.Interfaces.Services.Security;
+using EventManager.Domain.Entities;
 using EventManager.Domain.Enums;
 using EventManager.Infrastructure.Settings;
 using Microsoft.Extensions.Options;
@@ -10,14 +11,14 @@ namespace EventManager.Infrastructure.Services.Security;
 
 public class JwtTokenService(IOptions<JwtSettings> jwtSettings) : IJwtTokenService
 {
-    public string GenerateJwtToken(Guid userId, string userLogin, Roles userRole)
+    public string GenerateJwtToken(User user)
     {
         var claims = new Dictionary<string, object>
         {
-            [JwtRegisteredClaimNames.Sub] = userId,
-            [JwtRegisteredClaimNames.UniqueName] = userLogin,
+            [JwtRegisteredClaimNames.Sub] = user.Id,
+            [JwtRegisteredClaimNames.UniqueName] = user.Login,
             [JwtRegisteredClaimNames.Jti] = Guid.NewGuid().ToString(),
-            ["role"] = userRole.ToString()
+            ["role"] = user.Role.ToString()
         };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Value.Secret));

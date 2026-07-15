@@ -1,6 +1,6 @@
 ﻿using EventManager.Domain.Entities;
 
-namespace EventManager.Application.Interfaces;
+namespace EventManager.Application.Interfaces.Factories;
 
 public interface IBookingFactory
 {

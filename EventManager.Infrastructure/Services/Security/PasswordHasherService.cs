@@ -4,7 +4,7 @@ using System.Text;
 
 namespace EventManager.Infrastructure.Services.Security;
 
-public class PasswordHasher : IPasswordHasher
+public class PasswordHasherService : IPasswordHasherService
 {
     public string Hash(string password)
     {
