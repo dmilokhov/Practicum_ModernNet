@@ -45,5 +45,8 @@ public class Booking
         Status = status;
         ProcessedAt = DateTime.UtcNow;
     }
+
+    public bool IsCancelled => Status == BookingStatuses.Cancelled;
+    public bool IsRejected => Status == BookingStatuses.Rejected;
 }
 

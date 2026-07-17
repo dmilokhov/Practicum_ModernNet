@@ -37,8 +37,6 @@ public class EventsController(IEventService eventService, IBookingService bookin
     public async Task<ActionResult<ApiResult<PagedResponse<FullEventDto>>>> GetAll([FromQuery]EventFilter filter, 
         CancellationToken ct = default)
     {
-        var userRole = HttpContext.User;
-
         var data = await eventService.GetEventsAsync(filter, ct);
         var msg = data.TotalItems > 0 ? "Getting events" : "There are no events";
 

@@ -13,22 +13,22 @@ public class SubmitBookingValidationService(IEventRepository eventRepository, IU
         var eventForBooking = await eventRepository.GetAsync(command.EventId, ct);
         var user = await userRepository.GetByIdAsync(command.UserId, ct);
 
-        var reserved = eventForBooking.TryReserveSeats();
-        if (!reserved)
-        {
-            throw new NoAvailableSeatsException(ExceptionMessages.NoAvailableSeatsExceptionMsg);
-        }
-
-        if(DateTime.UtcNow >= eventForBooking.StartAt)
+        if (DateTime.UtcNow >= eventForBooking.StartAt)
         {
             throw new TryBookStartedEventException(ExceptionMessages.TryBookStartedEventExceptionMsg);
         }
 
-        if(user.Bookings.Count >= Limitations.MaxUserBookingAmount)
+        var usersActiveBookingCount = user.Bookings.Count(b => b is { IsCancelled: false, IsRejected: false });
+        if (usersActiveBookingCount >= Limitations.MaxUserBookingAmount)
         {
             throw new BookingLimitOverflowException(
                 ExceptionMessages.BookingLimitOverflowExceptionMsg(Limitations.MaxUserBookingAmount));
         }
-            
+
+        var reserved = eventForBooking.TryReserveSeats();
+        if (!reserved)
+        {
+            throw new NoAvailableSeatsException(ExceptionMessages.NoAvailableSeatsExceptionMsg);
+        } 
     }
 }

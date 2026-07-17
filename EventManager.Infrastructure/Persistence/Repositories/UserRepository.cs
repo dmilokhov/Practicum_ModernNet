@@ -20,16 +20,9 @@ public class UserRepository(AppDbContext context) : IUserRepository
         return foundUser;
     }
 
-    public async Task<User> GetByLoginAsync(string login, CancellationToken ct = default)
+    public async Task<User?> GetByLoginAsync(string login, CancellationToken ct = default)
     {
-        var foundUser = await context.Users.FirstOrDefaultAsync(u => u.Login == login, ct);
-
-        if (foundUser is null)
-        {
-            throw new EntityNotFoundException(nameof(User));
-        }
-
-        return foundUser;
+        return await context.Users.FirstOrDefaultAsync(u => u.Login == login, ct);
     }
 
     public async Task<bool> IsUserExistAsync(string login, CancellationToken ct = default)

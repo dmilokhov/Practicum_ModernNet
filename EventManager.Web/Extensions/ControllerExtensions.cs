@@ -26,7 +26,7 @@ public static class ControllerExtensions
 
         if (string.IsNullOrEmpty(subClaim) || !Enum.TryParse(subClaim, out Roles role))
         {
-            throw new UnauthorizedException(ExceptionMessages.InvalidUserIdMsg);
+            throw new UnauthorizedException(ExceptionMessages.InvalidUserRoleMsg);
         }
 
         return role;

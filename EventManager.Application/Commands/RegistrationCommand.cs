@@ -1,6 +1,4 @@
-﻿using EventManager.Domain.Constants;
-using EventManager.Domain.Enums;
-using System.ComponentModel.DataAnnotations;
+﻿using EventManager.Domain.Enums;
 
 namespace EventManager.Application.Commands;
 

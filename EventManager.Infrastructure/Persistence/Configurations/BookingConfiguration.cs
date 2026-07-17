@@ -42,5 +42,8 @@ public class BookingConfiguration : IEntityTypeConfiguration<Booking>
             .WithMany(u => u.Bookings)
             .HasForeignKey(b => b.UserId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Ignore(b => b.IsCancelled);
+        builder.Ignore(b => b.IsRejected);
     }
 }

@@ -19,7 +19,7 @@ public class AuthController(ILoginService loginService) : ControllerBase
     [HttpPost("register")]
     [ProducesResponseType(typeof(ApiResult), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResult>> GetAsync(RegistrationCommand request, CancellationToken ct = default)
+    public async Task<ActionResult<ApiResult>> RegisterAsync(RegistrationCommand request, CancellationToken ct = default)
     {
         await loginService.RegisterUserAsync(request, ct);
         return Ok(new ApiResult
@@ -42,7 +42,7 @@ public class AuthController(ILoginService loginService) : ControllerBase
     [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResult<string>>> GetAsync(LoginCommand request, CancellationToken ct = default)
+    public async Task<ActionResult<ApiResult<string>>> LoginAsync(LoginCommand request, CancellationToken ct = default)
     {
         var token = await loginService.LoginAsync(request, ct);
         return Ok(new ApiResult<string>

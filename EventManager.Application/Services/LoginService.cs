@@ -31,9 +31,10 @@ public class LoginService(
         await loginValidator.ValidateAndThrowAsync(request, ct);
 
         var user = await userRepository.GetByLoginAsync(request.Login, ct);
-        var isPasswordCorrect = passwordHasherService.Verify(request.Password, user.PasswordHash);
+        var passwordHash = user?.PasswordHash ?? string.Empty;
+        var isPasswordCorrect = passwordHasherService.Verify(request.Password, passwordHash);
 
-        if (!isPasswordCorrect)
+        if (user is null || !isPasswordCorrect)
         {
             throw new UnauthorizedException(ExceptionMessages.InvalidLoginOrPasswordMsg);
         }

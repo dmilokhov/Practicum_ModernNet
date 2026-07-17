@@ -29,7 +29,8 @@ public class BookingsController(IBookingService bookingService) : ControllerBase
     [HttpGet("{bookingId:guid}", Name = RouteNames.GetBookingIdRoute)]
     public async Task<ActionResult<ApiResult<BookingResponse>>> GetAsync(Guid bookingId, CancellationToken ct = default)
     {
-        var bookingDto = await bookingService.GetBookingByIdAsync(bookingId, ct);
+        var request = new GetBookingByIdCommand(bookingId, this.GetUserId(), this.GetUserRole());
+        var bookingDto = await bookingService.GetBookingByIdAsync(request, ct);
         return Ok(new ApiResult<BookingResponse>
         {
             Data = bookingDto,
@@ -55,7 +56,7 @@ public class BookingsController(IBookingService bookingService) : ControllerBase
     [Produces("application/json")]
     public async Task<ActionResult<ApiResult>> Cancel([FromRoute] Guid bookingId, CancellationToken ct = default)
     {
-        var request = new CancelBookingCommand(bookingId, this.GetUserId(), this.GetUserRole()) ;
+        var request = new CancelBookingCommand(bookingId, this.GetUserId(), this.GetUserRole());
 
         await bookingService.CancelBookingAsync(request, ct);
         return Ok(new ApiResult

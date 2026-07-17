@@ -5,7 +5,6 @@ using EventManager.Application.Interfaces.Repositories;
 using EventManager.Application.Interfaces.Services;
 using EventManager.Application.Interfaces.Services.Validation;
 using EventManager.Application.Model.Factories;
-using EventManager.Application.Model.Mapping;
 using EventManager.Application.Responses;
 using EventManager.Domain.Constants;
 using EventManager.Domain.Entities;
@@ -24,7 +23,6 @@ public class BookingService(
 {
     public async Task<BookingResponse> SubmitBookingAsync(SubmitBookingCommand command, CancellationToken ct = default)
     {
-        await validator.ValidateAsync(command, ct);
         var bookingDto = await CreateBookingAsync(command, ct);
         await bookingQueue.EnqueueAsync(bookingDto, ct);
         return bookingDto;
@@ -33,25 +31,34 @@ public class BookingService(
     public async Task CancelBookingAsync(CancelBookingCommand command, CancellationToken ct = default)
     {
         var bookingEntity = await bookingRepository.GetAsync(command.BookingId, ct);
-
-        if(command.UserRole == Roles.User && bookingEntity.UserId != command.UserId)
-        {
-            throw new OperationNotAllowedException(ExceptionMessages.UserCanCancelOnlyHisBookingsMsg);
-        }    
+        CheckCurrentUser(command.UserRole, command.UserId, bookingEntity.UserId);
 
         bookingEntity.Cancel();
-        await bookingRepository.SaveChangesAsync(ct);
+
+        using (await lockProvider.AcquireAsync(bookingEntity.EventId, ct))
+        {
+            var eventToUpdate = await eventRepository.GetAsync(bookingEntity.EventId, ct);
+            eventToUpdate.ReleaseSeats();
+            await bookingRepository.SaveChangesAsync(ct);
+        }
     }
 
-    public async Task<BookingResponse> GetBookingByIdAsync(Guid bookingId, CancellationToken ct = default)
+    public async Task<BookingResponse> GetBookingByIdAsync(GetBookingByIdCommand command, CancellationToken ct = default)
     {
-        var bookingEntity = await bookingRepository.GetAsync(bookingId, ct);
+        var bookingEntity = await bookingRepository.GetAsync(command.BookingId, ct);
+        CheckCurrentUser(command.UserRole, command.UserId, bookingEntity.UserId); 
+
         return BookingResponseCreator.Create(bookingEntity);
     }
 
     public async Task ProcessBookingAsync(Guid bookingId, CancellationToken ct = default)
     {
         var booking = await bookingRepository.GetAsync(bookingId, ct);
+
+        if(booking.IsCancelled)
+        {
+            return;
+        }
 
         await Task.Delay(TimeSpan.FromSeconds(2), ct);
 
@@ -87,11 +94,20 @@ public class BookingService(
     {
         using (await lockProvider.AcquireAsync(command.EventId, ct))
         {
+            await validator.ValidateAsync(command, ct);
             var booking = bookingFactory.Create(command.EventId, command.UserId);
             await bookingRepository.AddAsync(booking, ct);
             await bookingRepository.SaveChangesAsync(ct);
 
-            return BookingResponseCreator.Create(booking); ;
+            return BookingResponseCreator.Create(booking);
+        }
+    }
+
+    private void CheckCurrentUser(Roles requestUserRole, Guid requestUserid, Guid bookingUserId)
+    {
+        if (requestUserRole == Roles.User && requestUserid != bookingUserId)
+        {
+            throw new OperationNotAllowedException(ExceptionMessages.UserCanCancelOnlyHisBookingsMsg);
         }
     }
 }
