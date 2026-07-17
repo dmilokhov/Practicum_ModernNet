@@ -1,4 +1,5 @@
 ﻿using EventManager.Domain.Entities;
+using EventManager.Domain.Enums;
 using EventManager.Infrastructure.Persistence.Repositories;
 using EventManager.IntegrationTests.Infrastructure;
 using FluentAssertions;
@@ -41,15 +42,15 @@ public class DatabaseTests(PostgreSqlFixture fixture)
     }
 
     [Fact]
-    public void Booking_Positive_HasForeignKey()
+    public void Booking_Positive_HasForeignKeys()
     {
         using var context = fixture.CreateContext();
 
         var entity = context.Model.FindEntityType(typeof(Booking));
 
-        var fk = entity!.GetForeignKeys().Single();
+        var fkCount = entity!.GetForeignKeys().Count();
 
-        fk.PrincipalEntityType.ClrType.Should().Be(typeof(Event));
+        fkCount.Should().Be(2);
     }
 
     [Fact]
@@ -66,10 +67,13 @@ public class DatabaseTests(PostgreSqlFixture fixture)
             new DateTime(2025, 04, 04, 0, 0, 0, DateTimeKind.Utc),
             20);
 
-        await context.Events.AddAsync(eventModel);
+        var user = new User(Guid.NewGuid(), "test", "test", Roles.Admin);
 
-        var bookingModel1 = new Booking(Guid.NewGuid(), eventModel.Id, BookingStatus.Pending, DateTime.UtcNow);
-        var bookingModel2 = new Booking(Guid.NewGuid(), eventModel.Id, BookingStatus.Pending, DateTime.UtcNow);
+        await context.Events.AddAsync(eventModel);
+        await context.Users.AddAsync(user);
+
+        var bookingModel1 = new Booking(Guid.NewGuid(), eventModel.Id, user.Id, BookingStatuses.Pending, DateTime.UtcNow);
+        var bookingModel2 = new Booking(Guid.NewGuid(), eventModel.Id, user.Id, BookingStatuses.Pending, DateTime.UtcNow);
 
         await context.Bookings.AddRangeAsync(bookingModel1, bookingModel2);
 

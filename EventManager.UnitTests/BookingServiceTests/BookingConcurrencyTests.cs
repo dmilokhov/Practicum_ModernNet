@@ -1,10 +1,13 @@
-﻿using EventManager.Application.Interfaces.Repositories;
+﻿using EventManager.Application.Commands;
+using EventManager.Application.Interfaces.Repositories;
 using EventManager.Application.Interfaces.Services;
-using EventManager.Application.Model.DTOs;
+using EventManager.Application.Responses;
 using EventManager.Domain.Entities;
+using EventManager.Domain.Enums;
 using EventManager.Domain.Exceptions;
 using EventManager.Infrastructure.Persistence;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace EventManager.UnitTests.BookingServiceTests;
@@ -23,11 +26,14 @@ public class BookingConcurrencyTests : BookingServiceTestsBase
         var someEvent = new Event(
             "testEvent",
             "descr",
-            new DateTime(2026, 05, 20),
-            new DateTime(2026, 06, 20),
+            new DateTime(2030, 05, 20),
+            new DateTime(2030, 06, 20),
             5);
 
         await setupDbContext.Events.AddAsync(someEvent);
+
+        var someUser = new User(Guid.NewGuid(), "Test user", "hash", Roles.Admin);
+        await setupDbContext.Users.AddAsync(someUser);
         await setupDbContext.SaveChangesAsync();
 
         var eventId = someEvent.Id;
@@ -40,7 +46,7 @@ public class BookingConcurrencyTests : BookingServiceTestsBase
 
                 try
                 {
-                    await bookingService.CreateBookingAsync(eventId);
+                    await bookingService.SubmitBookingAsync(new SubmitBookingCommand( eventId, someUser.Id));
 
                     return new
                     {
@@ -86,11 +92,14 @@ public class BookingConcurrencyTests : BookingServiceTestsBase
         var someEvent = new Event(
             "testEvent",
             "descr",
-            new DateTime(2026, 05, 20),
-            new DateTime(2026, 06, 20),
+            new DateTime(2030, 05, 20),
+            new DateTime(2030, 06, 20),
             totalSeats);
 
         await setupDbContext.Events.AddAsync(someEvent);
+        var someUser = new User(Guid.NewGuid(), "Test user", "hash", Roles.Admin);
+        await setupDbContext.Users.AddAsync(someUser);
+
         await setupDbContext.SaveChangesAsync();
 
         var eventId = someEvent.Id;
@@ -102,12 +111,13 @@ public class BookingConcurrencyTests : BookingServiceTestsBase
 
                 try
                 {
-                    var result = await bookingService.CreateBookingAsync(eventId);
+                    var result = await bookingService.SubmitBookingAsync(
+                        new SubmitBookingCommand(eventId, someUser.Id));
 
                     return new
                     {
                         Success = true,
-                        Booking = (BookingDto?)result,
+                        Booking = (BookingResponse?)result,
                         Exception = (Exception?)null
                     };
                 }
@@ -116,7 +126,7 @@ public class BookingConcurrencyTests : BookingServiceTestsBase
                     return new
                     {
                         Success = false,
-                        Booking = (BookingDto?)null,
+                        Booking = (BookingResponse?)null,
                         Exception = (Exception?)ex
                     };
                 }

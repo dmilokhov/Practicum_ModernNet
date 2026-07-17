@@ -1,5 +1,7 @@
 ﻿using EventManager.Application.Interfaces.Services;
+using EventManager.Domain.Constants;
 using EventManager.Domain.Entities;
+using EventManager.Domain.Enums;
 using EventManager.Domain.Exceptions;
 using EventManager.Infrastructure.Persistence;
 using FluentAssertions;
@@ -13,7 +15,7 @@ public class GetBookingByIdTests : BookingServiceTestsBase
     public async Task GetBookingById_Positive()
     {
         //Arrange
-        var bookingToFind = BookingFactory.Create(Guid.NewGuid());
+        var bookingToFind = BookingFactory.Create(Guid.NewGuid(), Guid.NewGuid());
         
         using var scope = CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -23,7 +25,8 @@ public class GetBookingByIdTests : BookingServiceTestsBase
         await dbContext.SaveChangesAsync();
         
         //Act
-        var result =  await bookingService.GetBookingByIdAsync(bookingToFind.Id);
+        var result =  await bookingService.GetBookingByIdAsync(
+            new(bookingToFind.Id, bookingToFind.UserId, Roles.User));
 
         //Assert
         result.Should().NotBeNull();
@@ -41,9 +44,56 @@ public class GetBookingByIdTests : BookingServiceTestsBase
         var expectedExceptionMessage = $"{nameof(Booking)} {randomGuid} is not found";
 
         //Act
-        var action = async () => await bookingService.GetBookingByIdAsync(randomGuid);
+        var action = async () => await bookingService.GetBookingByIdAsync(
+            new(randomGuid, Guid.NewGuid(), Roles.User));
 
         //Assert
         await action.Should().ThrowAsync<EntityNotFoundException>().WithMessage(expectedExceptionMessage);
+    }
+
+    [Fact]
+    public async Task GetBookingById_UserCannotAccessOthersBooking()
+    {
+        //Arrange
+        var ownerId = Guid.NewGuid();
+        var otherUserId = Guid.NewGuid();
+        var bookingToFind = BookingFactory.Create(Guid.NewGuid(), ownerId);
+
+        using var scope = CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+
+        await dbContext.Bookings.AddAsync(bookingToFind);
+        await dbContext.SaveChangesAsync();
+
+        //Act
+        var action = async () => await bookingService.GetBookingByIdAsync(
+            new(bookingToFind.Id, otherUserId, Roles.User));
+
+        //Assert
+        await action.Should().ThrowAsync<OperationNotAllowedException>()
+            .WithMessage(ExceptionMessages.UserCanCancelOnlyHisBookingsMsg);
+    }
+
+    [Fact]
+    public async Task GetBookingById_AdminCanAccessAnyBooking()
+    {
+        //Arrange
+        var ownerId = Guid.NewGuid();
+        var bookingToFind = BookingFactory.Create(Guid.NewGuid(), ownerId);
+
+        using var scope = CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+
+        await dbContext.Bookings.AddAsync(bookingToFind);
+        await dbContext.SaveChangesAsync();
+
+        //Act
+        var result = await bookingService.GetBookingByIdAsync(
+            new(bookingToFind.Id, Guid.NewGuid(), Roles.Admin));
+
+        //Assert
+        result.Id.Should().Be(bookingToFind.Id);
     }
 }
