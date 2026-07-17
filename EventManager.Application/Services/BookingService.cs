@@ -4,8 +4,9 @@ using EventManager.Application.Interfaces.Factories;
 using EventManager.Application.Interfaces.Repositories;
 using EventManager.Application.Interfaces.Services;
 using EventManager.Application.Interfaces.Services.Validation;
-using EventManager.Application.Model.DTOs;
+using EventManager.Application.Model.Factories;
 using EventManager.Application.Model.Mapping;
+using EventManager.Application.Responses;
 using EventManager.Domain.Constants;
 using EventManager.Domain.Entities;
 using EventManager.Domain.Enums;
@@ -14,15 +15,16 @@ using EventManager.Domain.Exceptions;
 namespace EventManager.Application.Services;
 
 public class BookingService(
-    ISubmitBookingValidator validator,
+    ISubmitBookingValidationService validator,
     IBookingFactory bookingFactory,
     IBookingRepository bookingRepository,
     IEventRepository eventRepository,
     IEventBookingLockProvider lockProvider,
-    ITaskQueue<BookingDto> bookingQueue) : IBookingService
+    ITaskQueue<BookingResponse> bookingQueue) : IBookingService
 {
-    public async Task<BookingDto> SubmitBookingAsync(SubmitBookingCommand command, CancellationToken ct = default)
+    public async Task<BookingResponse> SubmitBookingAsync(SubmitBookingCommand command, CancellationToken ct = default)
     {
+        await validator.ValidateAsync(command, ct);
         var bookingDto = await CreateBookingAsync(command, ct);
         await bookingQueue.EnqueueAsync(bookingDto, ct);
         return bookingDto;
@@ -38,12 +40,13 @@ public class BookingService(
         }    
 
         bookingEntity.Cancel();
+        await bookingRepository.SaveChangesAsync(ct);
     }
 
-    public async Task<BookingDto> GetBookingByIdAsync(Guid bookingId, CancellationToken ct = default)
+    public async Task<BookingResponse> GetBookingByIdAsync(Guid bookingId, CancellationToken ct = default)
     {
         var bookingEntity = await bookingRepository.GetAsync(bookingId, ct);
-        return bookingEntity.ToDto();
+        return BookingResponseCreator.Create(bookingEntity);
     }
 
     public async Task ProcessBookingAsync(Guid bookingId, CancellationToken ct = default)
@@ -80,17 +83,15 @@ public class BookingService(
         }
     }
 
-    private async Task<BookingDto> CreateBookingAsync(SubmitBookingCommand command, CancellationToken ct = default)
+    private async Task<BookingResponse> CreateBookingAsync(SubmitBookingCommand command, CancellationToken ct = default)
     {
         using (await lockProvider.AcquireAsync(command.EventId, ct))
         {
-            await validator.ValidateAsync(command, ct);
-
             var booking = bookingFactory.Create(command.EventId, command.UserId);
             await bookingRepository.AddAsync(booking, ct);
             await bookingRepository.SaveChangesAsync(ct);
 
-            return booking.ToDto();
+            return BookingResponseCreator.Create(booking); ;
         }
     }
 }

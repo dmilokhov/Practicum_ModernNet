@@ -20,5 +20,4 @@ public static class ValidationMessages
     public const string TotalSeatsAboveZeroMsg = "TotalSeats should be above zero";
     public const string TotalSeatsIsRequiredMsg = "TotalSeats is required";
     public const string UserAlreadyExistsMsg = "User with the same login already exist";
-    public const string PasswordIsNotCorrectMsg = "Password is not correct";
 }

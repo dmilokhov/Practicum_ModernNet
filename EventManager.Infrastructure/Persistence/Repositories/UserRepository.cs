@@ -9,12 +9,20 @@ public class UserRepository(AppDbContext context) : IUserRepository
 {
     public async Task<User> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
-        return await TryGetUserAsync(id, ct);
+        var foundUser = await context.Users.Include(u => u.Bookings)
+                                           .FirstOrDefaultAsync(u => u.Id == id, ct);
+
+        if (foundUser is null)
+        {
+            throw new EntityNotFoundException(nameof(User), id);
+        }
+
+        return foundUser;
     }
 
     public async Task<User> GetByLoginAsync(string login, CancellationToken ct = default)
     {
-        var foundUser = await context.Users.FirstOrDefaultAsync(e => e.Login == login, ct);
+        var foundUser = await context.Users.FirstOrDefaultAsync(u => u.Login == login, ct);
 
         if (foundUser is null)
         {
@@ -37,17 +45,5 @@ public class UserRepository(AppDbContext context) : IUserRepository
     public async Task SaveChangesAsync(CancellationToken ct = default)
     {
         await context.SaveChangesAsync(ct);
-    }
-
-    private async Task<User> TryGetUserAsync(Guid id, CancellationToken ct = default)
-    {
-        var foundUser = await context.Users.FirstOrDefaultAsync(e => e.Id == id, ct);
-
-        if (foundUser is null)
-        {
-            throw new EntityNotFoundException(nameof(User), id);
-        }
-
-        return foundUser;
     }
 }

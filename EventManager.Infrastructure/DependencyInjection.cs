@@ -2,7 +2,7 @@
 using EventManager.Application.Interfaces.Repositories;
 using EventManager.Application.Interfaces.Services;
 using EventManager.Application.Interfaces.Services.Security;
-using EventManager.Application.Model.DTOs;
+using EventManager.Application.Responses;
 using EventManager.Infrastructure.Persistence;
 using EventManager.Infrastructure.Persistence.Repositories;
 using EventManager.Infrastructure.Queue;
@@ -19,13 +19,14 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddSingleton<ITaskQueue<BookingDto>, InMemoryTaskQueue<BookingDto>>();
+        services.AddSingleton<ITaskQueue<BookingResponse>, InMemoryTaskQueue<BookingResponse>>();
         services.AddSingleton<IEventBookingLockProvider, EventBookingLockProvider>();
 
         services.AddScoped<IEventRepository, EventRepository>();
         services.AddScoped<IBookingRepository, BookingRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
+        services.AddScoped<IPasswordHasherService, PasswordHasherService>();
 
         services.AddHostedService<BookingBackgroundService>();
 

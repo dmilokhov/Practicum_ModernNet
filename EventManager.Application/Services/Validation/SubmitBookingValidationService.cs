@@ -6,7 +6,7 @@ using EventManager.Domain.Exceptions;
 
 namespace EventManager.Application.Services.Validation;
 
-public class SubmitBookingValidator(IEventRepository eventRepository, IUserRepository userRepository) : ISubmitBookingValidator
+public class SubmitBookingValidationService(IEventRepository eventRepository, IUserRepository userRepository) : ISubmitBookingValidationService
 {
     public async Task ValidateAsync(SubmitBookingCommand command, CancellationToken ct = default)
     {
@@ -19,7 +19,7 @@ public class SubmitBookingValidator(IEventRepository eventRepository, IUserRepos
             throw new NoAvailableSeatsException(ExceptionMessages.NoAvailableSeatsExceptionMsg);
         }
 
-        if(eventForBooking.StartAt >= DateTime.UtcNow)
+        if(DateTime.UtcNow >= eventForBooking.StartAt)
         {
             throw new TryBookStartedEventException(ExceptionMessages.TryBookStartedEventExceptionMsg);
         }

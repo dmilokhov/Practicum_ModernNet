@@ -37,7 +37,7 @@ public class Booking
 
     private void Update(BookingStatuses status)
     {
-        if(status == BookingStatuses.Cancelled)
+        if(Status == BookingStatuses.Cancelled)
         {
             throw new TryChangeCancelledBookingException(ExceptionMessages.TryChangeCancelledBookingExceptionMsg);
         }

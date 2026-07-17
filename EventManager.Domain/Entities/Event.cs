@@ -1,6 +1,5 @@
 using EventManager.Domain.Constants;
 using EventManager.Domain.Exceptions;
-using System.ComponentModel.DataAnnotations;
 
 namespace EventManager.Domain.Entities;
 

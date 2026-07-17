@@ -4,11 +4,14 @@ using EventManager.Application.Interfaces.Repositories;
 using EventManager.Application.Interfaces.Services;
 using EventManager.Application.Interfaces.Services.Security;
 using EventManager.Domain.Constants;
-using System.ComponentModel.DataAnnotations;
+using EventManager.Domain.Exceptions;
+using FluentValidation;
 
 namespace EventManager.Application.Services;
 
 public class LoginService(
+    IValidator<RegistrationCommand> registrationValidator,
+    IValidator<LoginCommand> loginValidator,
     IUserRepository userRepository,
     IPasswordHasherService passwordHasherService,
     IJwtTokenService jwtTokenService,
@@ -16,11 +19,7 @@ public class LoginService(
 {
     public async Task RegisterUserAsync(RegistrationCommand request, CancellationToken ct = default)
     {
-        if(await userRepository.IsUserExistAsync(request.Login, ct))
-        {
-            throw new ValidationException(ValidationMessages.UserAlreadyExistsMsg);
-        }
-
+        await registrationValidator.ValidateAndThrowAsync(request, ct);
         var passwordHash = passwordHasherService.Hash(request.Password);
         var userEntity = userFactory.Create(request.Login, passwordHash, request.Role);
         await userRepository.AddAsync(userEntity, ct);
@@ -29,12 +28,14 @@ public class LoginService(
 
     public async Task<string> LoginAsync(LoginCommand request, CancellationToken ct = default)
     {
+        await loginValidator.ValidateAndThrowAsync(request, ct);
+
         var user = await userRepository.GetByLoginAsync(request.Login, ct);
         var isPasswordCorrect = passwordHasherService.Verify(request.Password, user.PasswordHash);
 
         if (!isPasswordCorrect)
         {
-            throw new ValidationException(ValidationMessages.PasswordIsNotCorrectMsg);
+            throw new UnauthorizedException(ExceptionMessages.InvalidLoginOrPasswordMsg);
         }
 
         return jwtTokenService.GenerateJwtToken(user);

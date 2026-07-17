@@ -3,13 +3,17 @@ using EventManager.Application.Interfaces.Services;
 using EventManager.Application.Model.DTOs;
 using EventManager.Application.Model.Filters;
 using EventManager.Application.Model.Responses;
+using EventManager.Application.Responses;
 using EventManager.Web.Constants;
 using EventManager.Web.Contracts;
+using EventManager.Web.Extensions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EventManager.Web.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("[controller]")]
 public class EventsController(IEventService eventService, IBookingService bookingService) : ControllerBase
 {
@@ -25,12 +29,16 @@ public class EventsController(IEventService eventService, IBookingService bookin
     /// <param name="ct">(optional) - cancellation token</param>
     /// <response code="200"> Returns JSON ApiResult with events data. 
     /// If there are no any - empty list with corresponding message</response>
+    /// <response code="401">Returns JSON ApiErrorResult with corresponding message if user is unauthorized</response>
     [ProducesResponseType(typeof(ApiResult<PagedResponse<FullEventDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)]
     [Produces("application/json")]
     [HttpGet]
     public async Task<ActionResult<ApiResult<PagedResponse<FullEventDto>>>> GetAll([FromQuery]EventFilter filter, 
         CancellationToken ct = default)
     {
+        var userRole = HttpContext.User;
+
         var data = await eventService.GetEventsAsync(filter, ct);
         var msg = data.TotalItems > 0 ? "Getting events" : "There are no events";
 
@@ -47,8 +55,10 @@ public class EventsController(IEventService eventService, IBookingService bookin
     /// <param name="id">Guid - id of an event to search</param>
     /// <param name="ct">(optional) - cancellation token</param>
     /// <response code="200"> Returns JSON ApiResult with an event data. </response>
+    /// <response code="401">Returns JSON ApiErrorResult with corresponding message if user is unauthorized</response>
     /// <response code="404">Returns JSON ApiErrorResult with corresponding message if event not found</response>
     [ProducesResponseType(typeof(ApiResult<FullEventDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status404NotFound)]
     [Produces("application/json")]
     [HttpGet("{id:guid}", Name = RouteNames.GetAsyncRoute)]
@@ -69,9 +79,14 @@ public class EventsController(IEventService eventService, IBookingService bookin
     /// <param name="ct">(optional) - cancellation token</param>
     /// <response code="201">Returns JSON ApiResult with created event data</response>
     /// <response code="400">Returns JSON ApiErrorResult with corresponding message if there are validation errors</response>
+    /// <response code="401">Returns JSON ApiErrorResult with corresponding message if user is unauthorized</response>
+    /// <response code="403">Returns JSON ApiErrorResult with corresponding message if access is forbidden</response>
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(ApiResult<FullEventDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status403Forbidden)]
     [Produces("application/json")]
     public async Task<ActionResult<ApiResult<FullEventDto>>> CreateAsync([FromBody] EventDto eventDto, 
         CancellationToken ct = default)
@@ -92,12 +107,17 @@ public class EventsController(IEventService eventService, IBookingService bookin
     /// <param name="eventDto">Updated event data</param>
     /// <param name="ct">(optional) - cancellation token</param>
     /// <response code="200">Returns JSON ApiResult with successful update message</response>
-    /// <response code="404">Returns JSON ApiErrorResult with corresponding message if event not found</response>
+    /// <response code="401">Returns JSON ApiErrorResult with corresponding message if user is unauthorized</response>
     /// <response code="400">Returns JSON ApiErrorResult with corresponding message if there are validation errors</response>
+    /// <response code="403">Returns JSON ApiErrorResult with corresponding message if access is forbidden</response>
+    /// <response code="404">Returns JSON ApiErrorResult with corresponding message if event not found</response>
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(ApiResult), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status404NotFound)]
     [Produces("application/json")]
     public async Task<ActionResult<ApiResult>> UpdateAsync(Guid id, [FromBody] EventDto eventDto, CancellationToken ct = default)
     {
@@ -111,9 +131,14 @@ public class EventsController(IEventService eventService, IBookingService bookin
     /// <param name="id">Guid - id of an event to delete</param>
     /// <param name="ct">(optional) - cancellation token</param>
     /// <response code="200">Returns JSON ApiResult with successful delete message</response>
+    /// <response code="401">Returns JSON ApiErrorResult with corresponding message if user is unauthorized</response>
+    /// <response code="403">Returns JSON ApiErrorResult with corresponding message if access is forbidden</response>
     /// <response code="404">Returns JSON ApiErrorResult with corresponding message if event not found</response>
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(ApiResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status404NotFound)]
     [Produces("application/json")]
     public async Task<ActionResult<ApiResult>> DeleteAsync(Guid id, CancellationToken ct = default)
@@ -128,21 +153,23 @@ public class EventsController(IEventService eventService, IBookingService bookin
     /// <param name="eventId">Guid - id of an event to book</param>
     /// <param name="ct">(optional) - cancellation token</param>
     /// <response code="202">Returns JSON ApiResult with accepted status</response>
+    /// <response code="401">Returns JSON ApiErrorResult with corresponding message if user is unauthorized</response>
     /// <response code="404">Returns JSON ApiErrorResult with corresponding message if event not found</response>
     /// <response code="409">Returns JSON ApiErrorResult with corresponding message if there are no available seats for an event</response>
     [HttpPost("{eventId:guid}/book")]
     [ProducesResponseType(typeof(ApiResult), StatusCodes.Status202Accepted)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status409Conflict)]
     [Produces("application/json")]
     public async Task<ActionResult<ApiResult>> BookAsync(Guid eventId, CancellationToken ct = default)
     {
-        //TODO: add userID from Token
-        var submitBookingCommand = new SubmitBookingCommand(eventId, Guid.NewGuid());
+        var userId = this.GetUserId();
+        var submitBookingCommand = new SubmitBookingCommand(eventId, userId);
         var bookingDto = await bookingService.SubmitBookingAsync(submitBookingCommand, ct);
 
         return AcceptedAtRoute(RouteNames.GetBookingIdRoute, new { bookingId = bookingDto.Id },
-            new ApiResult<BookingDto>
+            new ApiResult<BookingResponse>
             {
                 Data = bookingDto,
                 Message = "Event booking has been accepted and added to queue."
