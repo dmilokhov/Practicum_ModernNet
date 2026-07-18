@@ -13,7 +13,6 @@ using Microsoft.AspNetCore.Mvc;
 namespace EventManager.Web.Controllers;
 
 [ApiController]
-[Authorize]
 [Route("[controller]")]
 public class EventsController(IEventService eventService, IBookingService bookingService) : ControllerBase
 {
@@ -155,6 +154,7 @@ public class EventsController(IEventService eventService, IBookingService bookin
     /// <response code="404">Returns JSON ApiErrorResult with corresponding message if event not found</response>
     /// <response code="409">Returns JSON ApiErrorResult with corresponding message if there are no available seats for an event</response>
     [HttpPost("{eventId:guid}/book")]
+    [Authorize]
     [ProducesResponseType(typeof(ApiResult), StatusCodes.Status202Accepted)]
     [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status404NotFound)]

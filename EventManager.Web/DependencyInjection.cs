@@ -9,6 +9,7 @@ using Microsoft.OpenApi.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Reflection;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace EventManager.Web;
 
@@ -18,30 +19,32 @@ public static class DependencyInjection
     {
         services.AddSingleton<IExceptionMapper, ExceptionMapper>();
 
-        services.AddControllers().ConfigureApiBehaviorOptions(options =>
-        {
-            options.InvalidModelStateResponseFactory = context =>
+        services.AddControllers()
+            .ConfigureApiBehaviorOptions(options =>
             {
-                var errors = context.ModelState
-                    .Where(kv => kv.Value?.Errors.Count > 0)
-                    .ToDictionary(
-                        kv => kv.Key,
-                        kv => kv.Value!.Errors.Select(e => e.ErrorMessage));
-
-                var errorDetailsMsg = $"{string.Join(", ", errors.Select(kv => $"{kv.Key}: {string.Join(",", kv.Value)}"))}";
-                var result = new ApiErrorResult
+                options.InvalidModelStateResponseFactory = context =>
                 {
-                    Message = "Validation issues. See Error Details",
-                    ErrorDetails = new ValidationProblemDetails(context.ModelState)
-                    {
-                        Status = StatusCodes.Status400BadRequest,
-                        Detail = errorDetailsMsg
-                    }
-                };
+                    var errors = context.ModelState
+                        .Where(kv => kv.Value?.Errors.Count > 0)
+                        .ToDictionary(
+                            kv => kv.Key,
+                            kv => kv.Value!.Errors.Select(e => e.ErrorMessage));
 
-                return new BadRequestObjectResult(result);
-            };
-        });
+                    var errorDetailsMsg = $"{string.Join(", ", errors.Select(kv => $"{kv.Key}: {string.Join(",", kv.Value)}"))}";
+                    var result = new ApiErrorResult
+                    {
+                        Message = "Validation issues. See Error Details",
+                        ErrorDetails = new ValidationProblemDetails(context.ModelState)
+                        {
+                            Status = StatusCodes.Status400BadRequest,
+                            Detail = errorDetailsMsg
+                        }
+                    };
+
+                    return new BadRequestObjectResult(result);
+                };
+            })
+            .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 
         services.AddSwaggerGen(options =>
@@ -57,7 +60,7 @@ public static class DependencyInjection
                 Scheme = "Bearer",
                 BearerFormat = "JWT",
                 In = ParameterLocation.Header,
-                Description = "¬ведите JWT токен в формате: Token"
+                Description = "Enter JWT token in json format: Token"
             });
 
             options.AddSecurityRequirement(new OpenApiSecurityRequirement

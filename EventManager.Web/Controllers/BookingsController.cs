@@ -43,12 +43,12 @@ public class BookingsController(IBookingService bookingService) : ControllerBase
     /// </summary>
     /// <param name="bookingId">ID of a booking to cancel</param>
     /// <param name="ct">(optional) - cancellation token</param>
-    /// <response code="200">Returns JSON ApiResult with successful delete message</response>
+    /// <response code="204">No content - booking has been canceled</response>
     /// <response code="401">Returns JSON ApiErrorResult with corresponding message if user is unauthorized</response>
     /// <response code="403">Returns JSON ApiErrorResult with corresponding message if access is forbidden</response>
     /// <response code="404">Returns JSON ApiErrorResult with corresponding message if event not found</response>
-    [HttpPost("{bookingId:guid}/Cancel")]
-    [ProducesResponseType(typeof(ApiResult), StatusCodes.Status200OK)]
+    [HttpDelete("{bookingId:guid}")]
+    [ProducesResponseType(typeof(ApiResult), StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status403Forbidden)]
@@ -59,9 +59,6 @@ public class BookingsController(IBookingService bookingService) : ControllerBase
         var request = new CancelBookingCommand(bookingId, this.GetUserId(), this.GetUserRole());
 
         await bookingService.CancelBookingAsync(request, ct);
-        return Ok(new ApiResult
-        {
-            Message = $"Booking {request.BookingId} has been cancelled"
-        });
+        return NoContent();
     }
 }

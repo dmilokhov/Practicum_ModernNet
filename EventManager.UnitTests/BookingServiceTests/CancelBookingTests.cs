@@ -106,8 +106,31 @@ public class CancelBookingTests : BookingServiceTestsBase
         var action = async () => await bookingService.CancelBookingAsync(
             new CancelBookingCommand(booking.Id, user.Id, Roles.User));
 
-        await action.Should().ThrowAsync<TryChangeCancelledBookingException>()
-            .WithMessage(ExceptionMessages.TryChangeCancelledBookingExceptionMsg);
+        await action.Should().ThrowAsync<TryChangeWrongBookingException>()
+            .WithMessage(ExceptionMessages.NotPossibleToChangeBookingExceptionMsg(BookingStatuses.Cancelled));
+    }
+
+    [Fact]
+    public async Task CancelBooking_AlreadyRejected_Throws()
+    {
+        using var scope = CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+
+        var someEvent = CreateFutureEvent(totalSeats: 3);
+        var user = CreateUser("booking-user");
+        await dbContext.Events.AddAsync(someEvent);
+        await dbContext.Users.AddAsync(user);
+        await dbContext.SaveChangesAsync();
+
+        var booking = await bookingService.SubmitBookingAsync(new SubmitBookingCommand(someEvent.Id, user.Id));
+        await bookingService.RejectBookingAndReleaseEvent(booking.Id);
+
+        var action = async () => await bookingService.CancelBookingAsync(
+            new CancelBookingCommand(booking.Id, user.Id, Roles.User));
+
+        await action.Should().ThrowAsync<TryChangeWrongBookingException>()
+            .WithMessage(ExceptionMessages.NotPossibleToChangeBookingExceptionMsg(BookingStatuses.Cancelled));
     }
 
     [Fact]

@@ -14,18 +14,15 @@ public class AuthController(ILoginService loginService) : ControllerBase
     /// </summary>
     /// <param name="request">User registration data</param>
     /// <param name="ct">(optional) - cancellation token</param>
-    /// <response code="200">Returns JSON ApiResult with user registered message</response>
+    /// <response code="204">No content - user has been registered</response>
     /// <response code="400">Returns JSON ApiErrorResult with corresponding validation message</response>
     [HttpPost("register")]
-    [ProducesResponseType(typeof(ApiResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResult), StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResult>> RegisterAsync(RegistrationCommand request, CancellationToken ct = default)
     {
         await loginService.RegisterUserAsync(request, ct);
-        return Ok(new ApiResult
-        {
-            Message = $"User '{request.Login}' has been successfully registered"
-        });
+        return NoContent();
     }
 
     /// <summary>

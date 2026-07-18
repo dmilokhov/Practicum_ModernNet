@@ -13,11 +13,11 @@ public class ExceptionMapper : IExceptionMapper
         NoAvailableSeatsException nas => new(409, nas.Message),
         DomainValidationException ve => new(400, ve.Message),
         ValidationException fve => new(400, fve.Message),
-        UnauthorizedException ue => new(401, ue.Message),
+        UnauthorizedException ue => new(404, ue.Message),
         OperationNotAllowedException nae => new(403, nae.Message),
         TryBookStartedEventException tbse => new (400, tbse.Message),
         BookingLimitOverflowException bloe => new (409, bloe.Message),
-        TryChangeCancelledBookingException tce => new (400, tce.Message),
+        TryChangeWrongBookingException tce => new (400, tce.Message),
         _ => null
     };
 }

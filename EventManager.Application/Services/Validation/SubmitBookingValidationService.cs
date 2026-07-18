@@ -1,19 +1,17 @@
-﻿using EventManager.Application.Commands;
-using EventManager.Application.Interfaces.Repositories;
+﻿using EventManager.Application.Interfaces.Repositories;
 using EventManager.Application.Interfaces.Services.Validation;
 using EventManager.Domain.Constants;
 using EventManager.Domain.Exceptions;
 
 namespace EventManager.Application.Services.Validation;
 
-public class SubmitBookingValidationService(IEventRepository eventRepository, IUserRepository userRepository) : ISubmitBookingValidationService
+public class SubmitBookingValidationService(IUserRepository userRepository) : ISubmitBookingValidationService
 {
-    public async Task ValidateAsync(SubmitBookingCommand command, CancellationToken ct = default)
+    public async Task ValidateAsync(Guid userId, DateTime eventStartDate, CancellationToken ct = default)
     {
-        var eventForBooking = await eventRepository.GetAsync(command.EventId, ct);
-        var user = await userRepository.GetByIdAsync(command.UserId, ct);
+        var user = await userRepository.GetByIdAsync(userId, ct);
 
-        if (DateTime.UtcNow >= eventForBooking.StartAt)
+        if (DateTime.UtcNow >= eventStartDate)
         {
             throw new TryBookStartedEventException(ExceptionMessages.TryBookStartedEventExceptionMsg);
         }
@@ -24,11 +22,5 @@ public class SubmitBookingValidationService(IEventRepository eventRepository, IU
             throw new BookingLimitOverflowException(
                 ExceptionMessages.BookingLimitOverflowExceptionMsg(Limitations.MaxUserBookingAmount));
         }
-
-        var reserved = eventForBooking.TryReserveSeats();
-        if (!reserved)
-        {
-            throw new NoAvailableSeatsException(ExceptionMessages.NoAvailableSeatsExceptionMsg);
-        } 
     }
 }

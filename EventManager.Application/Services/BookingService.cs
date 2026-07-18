@@ -94,7 +94,15 @@ public class BookingService(
     {
         using (await lockProvider.AcquireAsync(command.EventId, ct))
         {
-            await validator.ValidateAsync(command, ct);
+            var eventForBooking = await eventRepository.GetAsync(command.EventId, ct);
+            await validator.ValidateAsync(command.UserId, eventForBooking.StartAt, ct);
+
+            var reserved = eventForBooking.TryReserveSeats();
+            if (!reserved)
+            {
+                throw new NoAvailableSeatsException(ExceptionMessages.NoAvailableSeatsExceptionMsg);
+            }
+
             var booking = bookingFactory.Create(command.EventId, command.UserId);
             await bookingRepository.AddAsync(booking, ct);
             await bookingRepository.SaveChangesAsync(ct);
