@@ -11,4 +11,9 @@ public static class MiddlewareExtensions
     {
         return builder.UseMiddleware<ExceptionHandlingMiddleware>();
     }
+
+    public static IApplicationBuilder UseAuthResponse(this IApplicationBuilder builder)
+    {
+        return builder.UseMiddleware<AuthResponseMiddleware>();
+    }
 }

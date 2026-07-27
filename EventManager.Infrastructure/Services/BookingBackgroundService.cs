@@ -1,6 +1,6 @@
 ﻿using EventManager.Application.Interfaces;
 using EventManager.Application.Interfaces.Services;
-using EventManager.Application.Model.DTOs;
+using EventManager.Application.Responses;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 namespace EventManager.Infrastructure.Services;
 
 public class BookingBackgroundService(ILogger<BookingBackgroundService> logger,
-    ITaskQueue<BookingDto> bookingQueue,
+    ITaskQueue<BookingResponse> bookingQueue,
     IServiceScopeFactory scopeFactory) : BackgroundService
 {
     private const int BookingProcessingTimeoutSec = 10;

@@ -20,7 +20,7 @@ if(isDevelopment)
 //services
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
-builder.Services.AddPresentation();
+builder.Services.AddPresentation(builder.Configuration);
 
 builder.Logging.AddConsole();
 
@@ -28,6 +28,7 @@ builder.Logging.AddConsole();
 var app = builder.Build();
 
 app.UseExceptionHandling();
+app.UseAuthResponse();
 
 if (isDevelopment)
 {
@@ -38,6 +39,9 @@ if (isDevelopment)
 app.UseRequestLogging();
 app.UseHttpsRedirection();
 app.UseRouting();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.Services.ApplyMigrations();
 

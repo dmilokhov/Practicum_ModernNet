@@ -1,11 +1,14 @@
 ﻿using EventManager.Application.Interfaces;
 using EventManager.Application.Interfaces.Repositories;
 using EventManager.Application.Interfaces.Services;
-using EventManager.Application.Model.DTOs;
+using EventManager.Application.Interfaces.Services.Security;
+using EventManager.Application.Responses;
 using EventManager.Infrastructure.Persistence;
 using EventManager.Infrastructure.Persistence.Repositories;
 using EventManager.Infrastructure.Queue;
 using EventManager.Infrastructure.Services;
+using EventManager.Infrastructure.Services.Security;
+using EventManager.Infrastructure.Settings;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,11 +19,14 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddSingleton<ITaskQueue<BookingDto>, InMemoryTaskQueue<BookingDto>>();
+        services.AddSingleton<ITaskQueue<BookingResponse>, InMemoryTaskQueue<BookingResponse>>();
         services.AddSingleton<IEventBookingLockProvider, EventBookingLockProvider>();
 
         services.AddScoped<IEventRepository, EventRepository>();
         services.AddScoped<IBookingRepository, BookingRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IJwtTokenService, JwtTokenService>();
+        services.AddScoped<IPasswordHasherService, PasswordHasherService>();
 
         services.AddHostedService<BookingBackgroundService>();
 
@@ -31,6 +37,9 @@ public static class DependencyInjection
             .UseNpgsql(connectionString)
             .LogTo(Console.WriteLine)
             .EnableDetailedErrors());
+
+        //Settings
+        services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
 
         return services;
     }

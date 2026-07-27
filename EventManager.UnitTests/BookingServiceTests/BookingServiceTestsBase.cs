@@ -1,9 +1,12 @@
 ﻿using EventManager.Application.Interfaces;
+using EventManager.Application.Interfaces.Factories;
 using EventManager.Application.Interfaces.Repositories;
 using EventManager.Application.Interfaces.Services;
-using EventManager.Application.Model.DTOs;
+using EventManager.Application.Interfaces.Services.Validation;
 using EventManager.Application.Model.Factories;
+using EventManager.Application.Responses;
 using EventManager.Application.Services;
+using EventManager.Application.Services.Validation;
 using EventManager.Infrastructure.Persistence;
 using EventManager.Infrastructure.Persistence.Repositories;
 using EventManager.Infrastructure.Services;
@@ -29,8 +32,11 @@ public abstract class BookingServiceTestsBase : IDisposable
 
         services.AddScoped<IBookingRepository, BookingRepository>();
         services.AddScoped<IEventRepository, EventRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IBookingFactory, BookingFactory>();
-        services.AddSingleton<ITaskQueue<BookingDto>, NoOpTaskQueue>();
+        services.AddScoped<IUserFactory, UserFactory>();
+        services.AddScoped<ISubmitBookingValidationService, SubmitBookingValidationService>();
+        services.AddSingleton<ITaskQueue<BookingResponse>, NoOpTaskQueue>();
         services.AddScoped<IBookingService, BookingService>();
 
         services.AddSingleton<IEventBookingLockProvider>(EventBookingLockProvider);
@@ -49,12 +55,12 @@ public abstract class BookingServiceTestsBase : IDisposable
     }
 }
 
-file sealed class NoOpTaskQueue : ITaskQueue<BookingDto>
+file sealed class NoOpTaskQueue : ITaskQueue<BookingResponse>
 {
-    public ValueTask EnqueueAsync(BookingDto bookingDto, CancellationToken ct = default) =>
+    public ValueTask EnqueueAsync(BookingResponse bookingDto, CancellationToken ct = default) =>
         ValueTask.CompletedTask;
 
-    public async IAsyncEnumerable<BookingDto> ReadAllAsync([EnumeratorCancellation] CancellationToken ct = default)
+    public async IAsyncEnumerable<BookingResponse> ReadAllAsync([EnumeratorCancellation] CancellationToken ct = default)
     {
         await Task.CompletedTask;
         yield break;

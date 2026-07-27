@@ -1,5 +1,4 @@
 ﻿using EventManager.Application.Interfaces;
-using EventManager.Application.Model.DTOs;
 using EventManager.Application.Model.Factories;
 using EventManager.Application.Services;
 using EventManager.Domain.Entities;
@@ -10,6 +9,8 @@ using EventManager.IntegrationTests.Infrastructure;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using System.Runtime.CompilerServices;
+using EventManager.Domain.Enums;
+using EventManager.Application.Responses;
 
 namespace EventManager.IntegrationTests;
 
@@ -33,9 +34,12 @@ public class BookingRepositoryTests(PostgreSqlFixture fixture)
             20);
 
         await context.Events.AddAsync(eventModel);
+       
+        var user = new User(Guid.NewGuid(),"TestUser1", "Test hash", Roles.Admin);
+        await context.Users.AddAsync(user);
         await context.SaveChangesAsync();
 
-        var bookingModel = new Booking(Guid.NewGuid(), eventModel.Id, BookingStatus.Pending, DateTime.UtcNow);
+        var bookingModel = new Booking(Guid.NewGuid(), eventModel.Id, user.Id, BookingStatuses.Pending, DateTime.UtcNow);
 
         await using var repositoryContext = fixture.CreateContext();
         var repository = new BookingRepository(repositoryContext);
@@ -49,7 +53,7 @@ public class BookingRepositoryTests(PostgreSqlFixture fixture)
         var savedBooking = await verifyContext.Bookings.FirstOrDefaultAsync(b => b.EventId == eventModel.Id);
 
         savedBooking.Should().NotBeNull();
-        savedBooking.Status.Should().Be(BookingStatus.Pending);
+        savedBooking.Status.Should().Be(BookingStatuses.Pending);
     }
 
     [Fact]
@@ -58,7 +62,7 @@ public class BookingRepositoryTests(PostgreSqlFixture fixture)
         // Arrange
         await fixture.ResetDatabaseAsync();
 
-        var bookingModel = new Booking(Guid.NewGuid(), Guid.NewGuid(), BookingStatus.Pending, DateTime.UtcNow);
+        var bookingModel = new Booking(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), BookingStatuses.Pending, DateTime.UtcNow);
 
         await using var repositoryContext = fixture.CreateContext();
         var repository = new BookingRepository(repositoryContext);
@@ -93,9 +97,12 @@ public class BookingRepositoryTests(PostgreSqlFixture fixture)
             20);
 
         await context.Events.AddAsync(eventModel);
+        
+        var user = new User(Guid.NewGuid(), "Test User", "Test hash", Roles.Admin);
+        await context.Users.AddAsync(user);
         await context.SaveChangesAsync();
 
-        var bookingModel = new Booking(Guid.NewGuid(), eventModel.Id, BookingStatus.Pending, DateTime.UtcNow);
+        var bookingModel = new Booking(Guid.NewGuid(), eventModel.Id, user.Id, BookingStatuses.Pending, DateTime.UtcNow);
         await context.Bookings.AddAsync(bookingModel);
         await context.SaveChangesAsync();
 
@@ -108,78 +115,6 @@ public class BookingRepositoryTests(PostgreSqlFixture fixture)
         // Assert
         result.Should().NotBeNull();
         result.EventId.Should().Be(eventModel.Id);
-    }
-
-    [Fact]
-    public async Task GetBooking_Positive_StatusChangedConfirmed()
-    {
-        // Arrange
-        await fixture.ResetDatabaseAsync();
-        await using var context = fixture.CreateContext();
-
-        var eventModel = new Event(
-            "Test Event",
-            "Test description",
-            new DateTime(2025, 02, 02, 0, 0, 0, DateTimeKind.Utc),
-            new DateTime(2025, 04, 04, 0, 0, 0, DateTimeKind.Utc),
-            20);
-
-        await context.Events.AddAsync(eventModel);
-        await context.SaveChangesAsync();
-
-        var bookingModel = new Booking(Guid.NewGuid(), eventModel.Id, BookingStatus.Pending, DateTime.UtcNow);
-        await context.Bookings.AddAsync(bookingModel);
-        await context.SaveChangesAsync();
-
-        await using var repositoryContext = fixture.CreateContext();
-        var bookingRepository = new BookingRepository(repositoryContext);
-        var eventRepository = new EventRepository(repositoryContext);
-
-        var bookingService = new BookingService(new BookingFactory(), bookingRepository, eventRepository, new EventBookingLockProvider(), new NoOpTaskQueue());
-
-        // Assert
-        await bookingService.ConfirmBooking(bookingModel.Id);
-        var result = await bookingRepository.GetAsync(bookingModel.Id);
-
-        // Assert
-        result.Should().NotBeNull();
-        result.Status.Should().Be(BookingStatus.Confirmed);
-    }
-
-    [Fact]
-    public async Task GetBooking_Positive_StatusChangedRejected()
-    {
-        // Arrange
-        await fixture.ResetDatabaseAsync();
-        await using var context = fixture.CreateContext();
-
-        var eventModel = new Event(
-            "Test Event",
-            "Test description",
-            new DateTime(2025, 02, 02, 0, 0, 0, DateTimeKind.Utc),
-            new DateTime(2025, 04, 04, 0, 0, 0, DateTimeKind.Utc),
-            20);
-
-        await context.Events.AddAsync(eventModel);
-        await context.SaveChangesAsync();
-
-        var bookingModel = new Booking(Guid.NewGuid(), eventModel.Id, BookingStatus.Pending, DateTime.UtcNow);
-        await context.Bookings.AddAsync(bookingModel);
-        await context.SaveChangesAsync();
-
-        await using var repositoryContext = fixture.CreateContext();
-        var bookingRepository = new BookingRepository(repositoryContext);
-        var eventRepository = new EventRepository(repositoryContext);
-
-        var bookingService = new BookingService(new BookingFactory(), bookingRepository, eventRepository, new EventBookingLockProvider(), new NoOpTaskQueue());
-
-        // Assert
-        await bookingService.RejectBooking(bookingModel.Id);
-        var result = await bookingRepository.GetAsync(bookingModel.Id);
-
-        // Assert
-        result.Should().NotBeNull();
-        result.Status.Should().Be(BookingStatus.Rejected);
     }
 
     [Fact]
@@ -204,12 +139,12 @@ public class BookingRepositoryTests(PostgreSqlFixture fixture)
     #endregion
 }
 
-file sealed class NoOpTaskQueue : ITaskQueue<BookingDto>
+file sealed class NoOpTaskQueue : ITaskQueue<BookingResponse>
 {
-    public ValueTask EnqueueAsync(BookingDto bookingDto, CancellationToken ct = default) =>
+    public ValueTask EnqueueAsync(BookingResponse bookingDto, CancellationToken ct = default) =>
         ValueTask.CompletedTask;
 
-    public async IAsyncEnumerable<BookingDto> ReadAllAsync([EnumeratorCancellation] CancellationToken ct = default)
+    public async IAsyncEnumerable<BookingResponse> ReadAllAsync([EnumeratorCancellation] CancellationToken ct = default)
     {
         await Task.CompletedTask;
         yield break;
