@@ -20,13 +20,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\UserService.Application\UserService.Application.csproj" />
-    <ProjectReference Include="..\UserService.Infrastructure\UserService.Infrastructure.csproj" />
+    <ProjectReference Include="..\EventService.Application\EventService.Application.csproj" />
+    <ProjectReference Include="..\EventService.Infrastructure\EventService.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="EventManager.Common.AspNetCore">
       <HintPath>..\..\Common\EventManager.Common.AspNetCore\bin\Release\net9.0\EventManager.Common.AspNetCore.dll</HintPath>
+    </Reference>
+    <Reference Include="EventManager.Common.Core">
+      <HintPath>..\..\Common\EventManager.Common.AspNetCore\bin\Release\net9.0\EventManager.Common.Core.dll</HintPath>
     </Reference>
   </ItemGroup>
 
