@@ -1,5 +1,6 @@
 ﻿using BookingService.Application.Interfaces.Repositories;
 using BookingService.Domain.Entities;
+using BookingService.Domain.Enums;
 using EventManager.Common.Core.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
@@ -27,8 +28,8 @@ public class BookingRepository(AppDbContext context) : IBookingRepository
     public async Task<int> GetUserActiveBookingsCountAsync(Guid userId, CancellationToken ct = default)
     {
         return await context.Bookings.CountAsync(b => b.UserId == userId && 
-                                                      !b.IsCancelled &&
-                                                      !b.IsRejected, ct);
+                                                      b.Status != BookingStatuses.Cancelled &&
+                                                      b.Status != BookingStatuses.Rejected, ct);
     }
 
     public async Task SaveChangesAsync(CancellationToken ct = default)
