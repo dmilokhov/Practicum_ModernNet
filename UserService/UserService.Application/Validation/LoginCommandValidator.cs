@@ -2,7 +2,7 @@
 using UserService.Domain.Constants;
 using FluentValidation;
 
-namespace UserService.Application.Services.Validation;
+namespace UserService.Application.Validation;
 
 public class LoginCommandValidator : AbstractValidator<LoginCommand>
 {

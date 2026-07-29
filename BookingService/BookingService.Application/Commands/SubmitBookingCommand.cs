@@ -1,3 +1,3 @@
 ﻿namespace BookingService.Application.Commands;
 
-public record SubmitBookingCommand(Guid EventId, Guid UserId);
+public record SubmitBookingCommand(Guid EventId, Guid UserId, int SeatsAmount);

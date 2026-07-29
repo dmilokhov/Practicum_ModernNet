@@ -1,6 +1,7 @@
 ﻿using Confluent.Kafka;
 using EventManager.Common.Core.Settings;
 using EventService.Application.Interfaces.Handlers;
+using EventService.Application.Interfaces.Messaging;
 using EventService.Application.Interfaces.Repositories;
 using EventService.Infrastructure.Handlers;
 using EventService.Infrastructure.Messaging;
@@ -32,7 +33,8 @@ public static class DependencyInjection
         services.Configure<KafkaSettings>(configuration.GetSection(KafkaSettings.SectionName));
 
         //Kafka
-        services.AddScoped<IBookingConfirmedMsgHandler, BookingConfirmedMsgHandler>();
+        services.AddScoped<IKafkaMessageHandler, BookingConfirmedMsgHandler>();
+        services.AddScoped<IKafkaMessageHandler, BookingCancelledMsgHandler>();
 
         services.AddSingleton(sp =>
         {
@@ -47,6 +49,8 @@ public static class DependencyInjection
                 EnableAutoOffsetStore = false
             };
         });
+
+        services.AddSingleton<IKafkaMessageDispatcher, KafkaMessageDispatcher>();
 
         services.AddHostedService<KafkaTopicsInitializer>();
         services.AddHostedService<BookingConsumerService>();

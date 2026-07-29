@@ -10,6 +10,7 @@ public class Booking
     public BookingStatuses Status { get; private set; }
     public DateTime CreatedAt { get; init; }
     public DateTime? ProcessedAt { get; private set; }
+    public int BookedSeatsAmount { get; init; }
     public Guid EventId { get; init; }
     public Guid UserId { get; init; }
 
@@ -20,13 +21,15 @@ public class Booking
         Guid eventId, 
         Guid userId,
         BookingStatuses status, 
-        DateTime createdAt)
+        DateTime createdAt,
+        int bookedSeatsAmount)
     {
         Id = id;
         EventId = eventId;
         UserId = userId;
         Status = status;
         CreatedAt = createdAt;
+        BookedSeatsAmount = bookedSeatsAmount;
     }
 
     public void Confirm() => Update(BookingStatuses.Confirmed);

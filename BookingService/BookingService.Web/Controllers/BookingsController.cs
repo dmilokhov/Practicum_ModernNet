@@ -66,6 +66,7 @@ public class BookingsController(IBookingOperationsService bookingService) : Cont
     /// Event booking
     /// </summary>
     /// <param name="eventId">Guid - id of an event to book</param>
+    /// <param name="seatsAmount">int - amount of seats to book</param>
     /// <param name="ct">(optional) - cancellation token</param>
     /// <response code="202">Returns JSON ApiResult with accepted status</response>
     /// <response code="401">Returns JSON ApiErrorResult with corresponding message if user is unauthorized</response>
@@ -78,10 +79,10 @@ public class BookingsController(IBookingOperationsService bookingService) : Cont
     [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status409Conflict)]
     [Produces("application/json")]
-    public async Task<ActionResult<ApiResult>> BookAsync(Guid eventId, CancellationToken ct = default)
+    public async Task<ActionResult<ApiResult>> BookAsync(Guid eventId, int seatsAmount, CancellationToken ct = default)
     {
         var userId = this.GetUserId();
-        var submitBookingCommand = new SubmitBookingCommand(eventId, userId);
+        var submitBookingCommand = new SubmitBookingCommand(eventId, userId, seatsAmount);
         var bookingDto = await bookingService.SubmitBookingAsync(submitBookingCommand, ct);
 
         return AcceptedAtRoute(RouteNames.GetBookingIdRoute, new { bookingId = bookingDto.Id },

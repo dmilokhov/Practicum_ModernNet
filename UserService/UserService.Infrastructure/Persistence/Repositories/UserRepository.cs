@@ -1,5 +1,4 @@
-﻿using EventManager.Common.Core.Exceptions;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using UserService.Application.Interfaces.Repositories;
 using UserService.Domain.Entities;
 

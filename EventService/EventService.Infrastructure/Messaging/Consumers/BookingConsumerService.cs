@@ -1,21 +1,15 @@
 ﻿using Confluent.Kafka;
 using EventManager.Common.Core.Constants;
-using EventManager.Common.Core.Contracts;
-using EventManager.Common.Core.Settings;
-using EventService.Application.Interfaces.Handlers;
-using Microsoft.Extensions.DependencyInjection;
+using EventService.Application.Interfaces.Messaging;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using System.Text.Json;
 
 namespace EventService.Infrastructure.Messaging.Consumers;
 
 public class BookingConsumerService(
     ILogger<BookingConsumerService> logger,
     ConsumerConfig config,
-    IServiceScopeFactory scopeFactory,
-    IOptions<KafkaSettings> settings)
+    IKafkaMessageDispatcher dispatcher)
     : BackgroundService
 {
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
@@ -26,37 +20,40 @@ public class BookingConsumerService(
     private async Task ConsumeAsync(CancellationToken stoppingToken)
     {
         using var consumer = new ConsumerBuilder<string, string>(config).Build();
-        consumer.Subscribe(TopicNames.BookingConfirmed);
+        consumer.Subscribe(
+        [
+            TopicNames.BookingConfirmed,
+            TopicNames.BookingCancelled
+        ]);
 
         try
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                var consumeResult = consumer.Consume(stoppingToken);
-                var bookingMsg = JsonSerializer.Deserialize<BookingConfirmedMsg>(consumeResult.Message.Value);
-
-                if (bookingMsg is null)
+                try
                 {
-                    logger.LogWarning("Received invalid message from topic {Topic}", consumeResult.Topic);
+                    var consumeResult = consumer.Consume(stoppingToken);
+
+                    logger.LogInformation("Processing message {Key}", consumeResult.Message.Key);
+
+                    await dispatcher.DispatchAsync(consumeResult.Topic, consumeResult.Message.Value, stoppingToken);
+
+                    logger.LogInformation("Processed message from topic {Topic}", consumeResult.Topic);
                     consumer.Commit(consumeResult);
-                    continue;
                 }
-
-                using var scope = scopeFactory.CreateScope();
-                var handler = scope.ServiceProvider.GetRequiredService<IBookingConfirmedMsgHandler>();
-
-                await handler.HandleAsync(bookingMsg, stoppingToken);
-
-                consumer.Commit(consumeResult);
+                catch (ConsumeException ex)
+                {
+                    logger.LogError(ex,"Kafka consume failed");
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error while processing kafka message");
+                }
             }
         }
         catch (OperationCanceledException)
         {
             logger.LogInformation("Consumer has been stopped.");
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error while processing kafka message");
         }
         finally
         {

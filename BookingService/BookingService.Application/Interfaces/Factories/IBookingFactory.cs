@@ -4,5 +4,5 @@ namespace BookingService.Application.Interfaces.Factories;
 
 public interface IBookingFactory
 {
-    Booking Create(Guid eventId, Guid userId);
+    Booking Create(Guid eventId, Guid userId, int seatsAmount);
 }

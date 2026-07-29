@@ -20,6 +20,10 @@ public class BookingConfiguration : IEntityTypeConfiguration<Booking>
             .HasColumnName("event_id")
             .IsRequired();
 
+        builder.Property(b => b.UserId)
+            .HasColumnName("user_id")
+            .IsRequired();
+
         builder.Property(b => b.Status)
             .HasColumnName("status")
             .IsRequired()
@@ -32,6 +36,10 @@ public class BookingConfiguration : IEntityTypeConfiguration<Booking>
 
         builder.Property(b => b.ProcessedAt)
             .HasColumnName("processed_at");
+
+        builder.Property(b => b.BookedSeatsAmount)
+            .HasColumnName("seats_amount")
+            .IsRequired();
 
         builder.Ignore(b => b.IsCancelled);
         builder.Ignore(b => b.IsRejected);

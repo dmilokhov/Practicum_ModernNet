@@ -13,6 +13,7 @@ public static class BookingResponseCreator
             UserId = entity.UserId,
             Status = entity.Status,
             CreatedAt = entity.CreatedAt,
-            ProcessedAt = entity.ProcessedAt
+            ProcessedAt = entity.ProcessedAt,
+            SeatsAmount = entity.BookedSeatsAmount
         };
 }

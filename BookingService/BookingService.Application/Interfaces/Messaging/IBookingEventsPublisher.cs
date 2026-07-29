@@ -2,7 +2,7 @@
 
 namespace BookingService.Application.Interfaces.Messaging;
 
-public interface IBookingEventsPublisher
+public interface IBookingEventsPublisher 
 {
-    Task PublishBookingConfirmedAsync(BookingConfirmedMsg msg, CancellationToken ct = default);
+    Task PublishAsync<TMessage>(string key, TMessage msg, CancellationToken ct = default) where TMessage : class;
 }

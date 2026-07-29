@@ -4,7 +4,7 @@ using UserService.Application.Interfaces.Factories;
 using UserService.Application.Interfaces.Services;
 using UserService.Application.Model.Factories;
 using UserService.Application.Services;
-using UserService.Application.Services.Validation;
+using UserService.Application.Validation;
 
 namespace UserService.Application;
 

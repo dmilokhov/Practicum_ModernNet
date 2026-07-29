@@ -1,4 +1,6 @@
-﻿using EventManager.Common.Core.Contracts;
+﻿using System.Text.Json;
+using EventManager.Common.Core.Constants;
+using EventManager.Common.Core.Contracts;
 using EventService.Application.Interfaces.Handlers;
 using EventService.Application.Interfaces.Repositories;
 using EventService.Domain.Constants;
@@ -8,10 +10,15 @@ namespace EventService.Infrastructure.Handlers
 {
     public class BookingConfirmedMsgHandler(
         ILogger<BookingConfirmedMsgHandler> logger,
-        IEventRepository eventRepository) : IBookingConfirmedMsgHandler
+        IEventRepository eventRepository) : IKafkaMessageHandler
     {
-        public async Task HandleAsync(BookingConfirmedMsg msg, CancellationToken ct = default)
+        public string Topic => TopicNames.BookingConfirmed;
+
+        public async Task HandleAsync(string payload, CancellationToken ct = default)
         {
+            var msg = JsonSerializer.Deserialize<BookingConfirmedMsg>(payload)
+                      ?? throw new JsonException("Invalid BookingConfirmedMsg.");
+
             var eventForBooking = await eventRepository.GetAsync(msg.EventId, ct);
 
             if (DateTime.UtcNow >= eventForBooking.StartAt)

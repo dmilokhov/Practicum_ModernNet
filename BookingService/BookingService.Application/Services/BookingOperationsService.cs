@@ -10,10 +10,12 @@ using BookingService.Domain.Constants;
 using BookingService.Domain.Exceptions;
 using EventManager.Common.Core.Contracts;
 using EventManager.Common.Core.Enums;
+using FluentValidation;
 
 namespace BookingService.Application.Services;
 
 public class BookingOperationsService(
+    IValidator<SubmitBookingCommand> submitBookingValidator,
     IBookingFactory bookingFactory,
     IBookingRepository bookingRepository,
     IEventBookingLockProvider lockProvider,
@@ -22,6 +24,8 @@ public class BookingOperationsService(
 {
     public async Task<BookingResponse> SubmitBookingAsync(SubmitBookingCommand command, CancellationToken ct = default)
     {
+        await submitBookingValidator.ValidateAndThrowAsync(command, ct);
+
         var bookingDto = await CreateBookingAsync(command, ct);
         await bookingQueue.EnqueueAsync(bookingDto, ct);
         return bookingDto;
@@ -33,13 +37,16 @@ public class BookingOperationsService(
         CheckCurrentUser(command.UserRole, command.UserId, bookingEntity.UserId);
 
         bookingEntity.Cancel();
+        await bookingRepository.SaveChangesAsync(ct);
 
-        using (await lockProvider.AcquireAsync(bookingEntity.EventId, ct))
-        {
-            //var eventToUpdate = await eventRepository.GetAsync(bookingEntity.EventId, ct);
-            //eventToUpdate.ReleaseSeats();
-            //await bookingRepository.SaveChangesAsync(ct);
-        }
+        await publisher.PublishAsync(
+            bookingEntity.EventId.ToString(),
+            new BookingCancelledMsg(
+                bookingEntity.Id,
+                bookingEntity.EventId,
+                bookingEntity.UserId,
+                bookingEntity.BookedSeatsAmount),
+            ct);
     }
 
     public async Task<BookingResponse> GetBookingByIdAsync(GetBookingByIdCommand command, CancellationToken ct = default)
@@ -62,12 +69,15 @@ public class BookingOperationsService(
         booking.Confirm();
         await bookingRepository.SaveChangesAsync(ct);
 
-        await publisher.PublishBookingConfirmedAsync(new BookingConfirmedMsg(
+        await publisher.PublishAsync(
+            booking.EventId.ToString(),
+            new BookingConfirmedMsg(
                 booking.Id,
                 booking.EventId,
                 booking.UserId,
-                booking.CreatedAt), ct);
-        //TODO: seatsamount?
+                booking.CreatedAt,
+                booking.BookedSeatsAmount),
+            ct);
     }
 
     public async Task RejectBookingAndReleaseEvent(Guid bookingId, CancellationToken ct = default)
@@ -76,11 +86,14 @@ public class BookingOperationsService(
         bookingEntity.Reject();
         await bookingRepository.SaveChangesAsync(ct);
 
-        using (await lockProvider.AcquireAsync(bookingEntity.EventId, ct))
-        {
-            //var eventToUpdate = await eventRepository.GetAsync(bookingEntity.EventId, ct);
-            //eventToUpdate.ReleaseSeats();
-        }
+        await publisher.PublishAsync(
+            bookingEntity.EventId.ToString(),
+            new BookingCancelledMsg(
+                bookingEntity.Id,
+                bookingEntity.EventId,
+                bookingEntity.UserId,
+                bookingEntity.BookedSeatsAmount),
+            ct);
     }
 
     private async Task<BookingResponse> CreateBookingAsync(SubmitBookingCommand command, CancellationToken ct = default)
@@ -94,7 +107,7 @@ public class BookingOperationsService(
                     ExceptionMessages.BookingLimitOverflowExceptionMsg(Limitations.MaxUserBookingAmount));
             }
 
-            var booking = bookingFactory.Create(command.EventId, command.UserId);
+            var booking = bookingFactory.Create(command.EventId, command.UserId, command.SeatsAmount);
             await bookingRepository.AddAsync(booking, ct);
             await bookingRepository.SaveChangesAsync(ct);
 

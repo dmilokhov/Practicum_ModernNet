@@ -6,6 +6,6 @@ namespace BookingService.Application.Model.Factories;
 
 public class BookingFactory : IBookingFactory
 {
-    public Booking Create(Guid eventId, Guid userId) =>
-        new(Guid.NewGuid(), eventId, userId, BookingStatuses.Pending, DateTime.UtcNow);
+    public Booking Create(Guid eventId, Guid userId, int seatsAmount) =>
+        new(Guid.NewGuid(), eventId, userId, BookingStatuses.Pending, DateTime.UtcNow, seatsAmount);
 }
