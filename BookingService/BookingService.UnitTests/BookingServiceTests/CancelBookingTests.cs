@@ -1,5 +1,4 @@
 using BookingService.Application.Commands;
-using BookingService.Application.Interfaces.Repositories;
 using BookingService.Application.Interfaces.Services;
 using BookingService.Domain.Constants;
 using BookingService.Domain.Entities;
@@ -15,125 +14,103 @@ namespace BookingService.UnitTests.BookingServiceTests;
 
 public class CancelBookingTests : BookingServiceTestsBase
 {
-    //[Fact]
-    //public async Task CancelBooking_ReleasesSeat()
-    //{
-    //    using var scope = CreateScope();
-    //    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    //    var bookingService = scope.ServiceProvider.GetRequiredService<IBookingOperationsService>();
-    //    var eventRepository = scope.ServiceProvider.GetRequiredService<IEventRepository>();
+    [Fact]
+    public async Task CancelBooking_ReleasesSeat()
+    {
+        using var scope = CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var bookingService = scope.ServiceProvider.GetRequiredService<IBookingOperationsService>();
 
-    //    var someEvent = CreateFutureEvent(totalSeats: 5);
-    //    var user = CreateUser("booking-user");
-    //    await dbContext.Events.AddAsync(someEvent);
-    //    await dbContext.Users.AddAsync(user);
-    //    await dbContext.SaveChangesAsync();
+        var eventId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        const int seatsAmount = 1;
 
-    //    var booking = await bookingService.SubmitBookingAsync(new SubmitBookingCommand(someEvent.Id, user.Id));
+        var booking = await bookingService.SubmitBookingAsync(new SubmitBookingCommand(eventId, userId, seatsAmount));
 
-    //    var eventAfterBooking = await eventRepository.GetAsync(someEvent.Id);
-    //    eventAfterBooking.AvailableSeats.Should().Be(4);
+        await bookingService.CancelBookingAsync(new CancelBookingCommand(booking.Id, userId, Roles.User));
 
-    //    await bookingService.CancelBookingAsync(new CancelBookingCommand(booking.Id, user.Id, Roles.User));
+        var cancelledBooking = await dbContext.Bookings.FindAsync(booking.Id);
+        cancelledBooking!.Status.Should().Be(BookingStatuses.Cancelled);
+    }
 
-    //    var eventAfterCancel = await eventRepository.GetAsync(someEvent.Id);
-    //    eventAfterCancel.AvailableSeats.Should().Be(5);
+    [Fact]
+    public async Task CancelBooking_UserCannotCancelOthersBooking()
+    {
+        using var scope = CreateScope();
+        var bookingService = scope.ServiceProvider.GetRequiredService<IBookingOperationsService>();
 
-    //    var cancelledBooking = await dbContext.Bookings.FindAsync(booking.Id);
-    //    cancelledBooking!.Status.Should().Be(BookingStatuses.Cancelled);
-    //}
+        var eventId = Guid.NewGuid();
+        var ownerId = Guid.NewGuid();
+        var someUserId = Guid.NewGuid();
+        const int seatsAmount = 1;
 
-    //[Fact]
-    //public async Task CancelBooking_UserCannotCancelOthersBooking()
-    //{
-    //    using var scope = CreateScope();
-    //    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    //    var bookingService = scope.ServiceProvider.GetRequiredService<IBookingOperationsService>();
+        var booking = await bookingService.SubmitBookingAsync(new SubmitBookingCommand(eventId, ownerId, seatsAmount));
 
-    //    var someEvent = CreateFutureEvent(totalSeats: 5);
-    //    var owner = CreateUser("owner");
-    //    var otherUser = CreateUser("other-user");
-    //    await dbContext.Events.AddAsync(someEvent);
-    //    await dbContext.Users.AddRangeAsync(owner, otherUser);
-    //    await dbContext.SaveChangesAsync();
+        var action = async () => await bookingService.CancelBookingAsync(
+            new CancelBookingCommand(booking.Id, someUserId, Roles.User));
 
-    //    var booking = await bookingService.SubmitBookingAsync(new SubmitBookingCommand(someEvent.Id, owner.Id));
+        await action.Should().ThrowAsync<OperationNotAllowedException>()
+            .WithMessage(ExceptionMessages.UserCanCancelOnlyHisBookingsMsg);
+    }
 
-    //    var action = async () => await bookingService.CancelBookingAsync(
-    //        new CancelBookingCommand(booking.Id, otherUser.Id, Roles.User));
+    [Fact]
+    public async Task CancelBooking_AdminCanCancelAnyBooking()
+    {
+        using var scope = CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var bookingService = scope.ServiceProvider.GetRequiredService<IBookingOperationsService>();
 
-    //    await action.Should().ThrowAsync<OperationNotAllowedException>()
-    //        .WithMessage(ExceptionMessages.UserCanCancelOnlyHisBookingsMsg);
-    //}
+        var eventId = Guid.NewGuid();
+        var ownerId = Guid.NewGuid();
+        var someUserId = Guid.NewGuid();
+        const int seatsAmount = 1;
 
-    //[Fact]
-    //public async Task CancelBooking_AdminCanCancelAnyBooking()
-    //{
-    //    using var scope = CreateScope();
-    //    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    //    var bookingService = scope.ServiceProvider.GetRequiredService<IBookingOperationsService>();
-    //    var eventRepository = scope.ServiceProvider.GetRequiredService<IEventRepository>();
+        var booking = await bookingService.SubmitBookingAsync(new SubmitBookingCommand(eventId, ownerId, seatsAmount));
 
-    //    var someEvent = CreateFutureEvent(totalSeats: 3);
-    //    var owner = CreateUser("owner");
-    //    var admin = CreateUser("admin", Roles.Admin);
-    //    await dbContext.Events.AddAsync(someEvent);
-    //    await dbContext.Users.AddRangeAsync(owner, admin);
-    //    await dbContext.SaveChangesAsync();
+        var action = async() => await bookingService.CancelBookingAsync(new CancelBookingCommand(booking.Id, someUserId, Roles.Admin));
 
-    //    var booking = await bookingService.SubmitBookingAsync(new SubmitBookingCommand(someEvent.Id, owner.Id));
+        await action.Should().NotThrowAsync();
+    }
 
-    //    await bookingService.CancelBookingAsync(new CancelBookingCommand(booking.Id, admin.Id, Roles.Admin));
+    [Fact]
+    public async Task CancelBooking_AlreadyCancelled_Throws()
+    {
+        using var scope = CreateScope();
+        var bookingService = scope.ServiceProvider.GetRequiredService<IBookingOperationsService>();
 
-    //    var eventAfterCancel = await eventRepository.GetAsync(someEvent.Id);
-    //    eventAfterCancel.AvailableSeats.Should().Be(3);
-    //}
+        var eventId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        const int seatsAmount = 1;
 
-    //[Fact]
-    //public async Task CancelBooking_AlreadyCancelled_Throws()
-    //{
-    //    using var scope = CreateScope();
-    //    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    //    var bookingService = scope.ServiceProvider.GetRequiredService<IBookingOperationsService>();
+        var booking = await bookingService.SubmitBookingAsync(new SubmitBookingCommand(eventId, userId, seatsAmount));
+        await bookingService.CancelBookingAsync(new CancelBookingCommand(booking.Id, userId, Roles.User));
 
-    //    var someEvent = CreateFutureEvent(totalSeats: 3);
-    //    var user = CreateUser("booking-user");
-    //    await dbContext.Events.AddAsync(someEvent);
-    //    await dbContext.Users.AddAsync(user);
-    //    await dbContext.SaveChangesAsync();
+        var action = async () => await bookingService.CancelBookingAsync(
+            new CancelBookingCommand(booking.Id, userId, Roles.User));
 
-    //    var booking = await bookingService.SubmitBookingAsync(new SubmitBookingCommand(someEvent.Id, user.Id));
-    //    await bookingService.CancelBookingAsync(new CancelBookingCommand(booking.Id, user.Id, Roles.User));
+        await action.Should().ThrowAsync<TryChangeWrongBookingException>()
+            .WithMessage(ExceptionMessages.NotPossibleToChangeBookingExceptionMsg(BookingStatuses.Cancelled));
+    }
 
-    //    var action = async () => await bookingService.CancelBookingAsync(
-    //        new CancelBookingCommand(booking.Id, user.Id, Roles.User));
+    [Fact]
+    public async Task CancelBooking_AlreadyRejected_Throws()
+    {
+        using var scope = CreateScope();
+        var bookingService = scope.ServiceProvider.GetRequiredService<IBookingOperationsService>();
 
-    //    await action.Should().ThrowAsync<TryChangeWrongBookingException>()
-    //        .WithMessage(ExceptionMessages.NotPossibleToChangeBookingExceptionMsg(BookingStatuses.Cancelled));
-    //}
+        var eventId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        const int seatsAmount = 1;
 
-    //[Fact]
-    //public async Task CancelBooking_AlreadyRejected_Throws()
-    //{
-    //    using var scope = CreateScope();
-    //    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    //    var bookingService = scope.ServiceProvider.GetRequiredService<IBookingOperationsService>();
+        var booking = await bookingService.SubmitBookingAsync(new SubmitBookingCommand(eventId, userId, seatsAmount));
+        await bookingService.RejectBooking(booking.Id);
 
-    //    var someEvent = CreateFutureEvent(totalSeats: 3);
-    //    var user = CreateUser("booking-user");
-    //    await dbContext.Events.AddAsync(someEvent);
-    //    await dbContext.Users.AddAsync(user);
-    //    await dbContext.SaveChangesAsync();
+        var action = async () => await bookingService.CancelBookingAsync(
+            new CancelBookingCommand(booking.Id, userId, Roles.User));
 
-    //    var booking = await bookingService.SubmitBookingAsync(new SubmitBookingCommand(someEvent.Id, user.Id));
-    //    await bookingService.RejectBookingAndReleaseEvent(booking.Id);
-
-    //    var action = async () => await bookingService.CancelBookingAsync(
-    //        new CancelBookingCommand(booking.Id, user.Id, Roles.User));
-
-    //    await action.Should().ThrowAsync<TryChangeWrongBookingException>()
-    //        .WithMessage(ExceptionMessages.NotPossibleToChangeBookingExceptionMsg(BookingStatuses.Cancelled));
-    //}
+        await action.Should().ThrowAsync<TryChangeWrongBookingException>()
+            .WithMessage(ExceptionMessages.NotPossibleToChangeBookingExceptionMsg(BookingStatuses.Cancelled));
+    }
 
     [Fact]
     public async Task CancelBooking_NotFound_Throws()

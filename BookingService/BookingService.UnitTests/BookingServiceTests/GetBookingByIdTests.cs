@@ -16,7 +16,7 @@ public class GetBookingByIdTests : BookingServiceTestsBase
     public async Task GetBookingById_Positive()
     {
         //Arrange
-        var bookingToFind = BookingFactory.Create(Guid.NewGuid(), Guid.NewGuid());
+        var bookingToFind = BookingFactory.Create(Guid.NewGuid(), Guid.NewGuid(), 1);
         
         using var scope = CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -58,7 +58,7 @@ public class GetBookingByIdTests : BookingServiceTestsBase
         //Arrange
         var ownerId = Guid.NewGuid();
         var otherUserId = Guid.NewGuid();
-        var bookingToFind = BookingFactory.Create(Guid.NewGuid(), ownerId);
+        var bookingToFind = BookingFactory.Create(Guid.NewGuid(), ownerId, 1);
 
         using var scope = CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -81,7 +81,7 @@ public class GetBookingByIdTests : BookingServiceTestsBase
     {
         //Arrange
         var ownerId = Guid.NewGuid();
-        var bookingToFind = BookingFactory.Create(Guid.NewGuid(), ownerId);
+        var bookingToFind = BookingFactory.Create(Guid.NewGuid(), ownerId, 1);
 
         using var scope = CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();

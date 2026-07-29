@@ -8,5 +8,5 @@ public interface IBookingOperationsService
     Task CancelBookingAsync(CancelBookingCommand command, CancellationToken ct = default);
     Task<BookingResponse> GetBookingByIdAsync(GetBookingByIdCommand command, CancellationToken ct = default);
     Task ProcessBookingAsync(Guid bookingId, CancellationToken ct = default);
-    Task RejectBookingAndReleaseEvent(Guid bookingId, CancellationToken ct = default);
+    Task RejectBooking(Guid bookingId, CancellationToken ct = default);
 }

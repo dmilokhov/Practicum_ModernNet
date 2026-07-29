@@ -4,7 +4,6 @@ using UserService.Application.Interfaces.Services;
 using UserService.Application.Interfaces.Services.Security;
 using UserService.Application.Model.Factories;
 using UserService.Application.Services;
-using UserService.Application.Services.Validation;
 using UserService.Domain.Entities;
 using UserService.Infrastructure.Persistence;
 using UserService.Infrastructure.Persistence.Repositories;
@@ -13,6 +12,7 @@ using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
+using UserService.Application.Validation;
 
 namespace UserService.UnitTests.LoginServiceTests;
 

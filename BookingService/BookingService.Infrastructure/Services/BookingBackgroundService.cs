@@ -43,13 +43,13 @@ public class BookingBackgroundService(ILogger<BookingBackgroundService> logger,
             }
             catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested)
             {
-                await bookingService.RejectBookingAndReleaseEvent(booking.Id, ct);
+                await bookingService.RejectBooking(booking.Id, ct);
                 logger.LogWarning("Event Booking Time-out. BookingId: {bookingId}, EventId: {eventId}",
                     booking.Id, booking.EventId);
             }
             catch (Exception ex)
             {
-                await bookingService.RejectBookingAndReleaseEvent(booking.Id, CancellationToken.None);
+                await bookingService.RejectBooking(booking.Id, CancellationToken.None);
                 logger.LogError(ex, "Error during event booking. BookingId: {bookingId}, EventId: {eventId}",
                     booking.Id, booking.EventId);
             }

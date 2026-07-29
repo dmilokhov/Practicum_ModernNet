@@ -4,7 +4,6 @@ using BookingService.Domain.Entities;
 using BookingService.Domain.Enums;
 using BookingService.Infrastructure.Persistence.Repositories;
 using BookingService.IntegrationTests.Infrastructure;
-using EventManager.Common.Core.Enums;
 using EventManager.Common.Core.Exceptions;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
@@ -27,7 +26,7 @@ public class BookingRepositoryTests(PostgreSqlFixture fixture)
         var eventId = Guid.NewGuid();
         var userId = Guid.NewGuid();
 
-        var bookingModel = new Booking(Guid.NewGuid(), eventId, userId, BookingStatuses.Pending, DateTime.UtcNow);
+        var bookingModel = new Booking(Guid.NewGuid(), eventId, userId, BookingStatuses.Pending, DateTime.UtcNow, 1);
 
         await using var repositoryContext = fixture.CreateContext();
         var repository = new BookingRepository(repositoryContext);
@@ -58,7 +57,7 @@ public class BookingRepositoryTests(PostgreSqlFixture fixture)
         var eventId = Guid.NewGuid();
         var userId = Guid.NewGuid();
 
-        var bookingModel = new Booking(Guid.NewGuid(), eventId, userId, BookingStatuses.Pending, DateTime.UtcNow);
+        var bookingModel = new Booking(Guid.NewGuid(), eventId, userId, BookingStatuses.Pending, DateTime.UtcNow, 1);
         await context.Bookings.AddAsync(bookingModel);
         await context.SaveChangesAsync();
 

@@ -80,7 +80,7 @@ public class BookingOperationsService(
             ct);
     }
 
-    public async Task RejectBookingAndReleaseEvent(Guid bookingId, CancellationToken ct = default)
+    public async Task RejectBooking(Guid bookingId, CancellationToken ct = default)
     {
         var bookingEntity = await bookingRepository.GetAsync(bookingId, ct);
         bookingEntity.Reject();
