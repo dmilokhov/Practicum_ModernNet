@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using EventManager.Common.Core.Settings;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using UserService.Application.Interfaces.Repositories;
@@ -24,6 +25,9 @@ public static class DependencyInjection
             .UseNpgsql(connectionString)
             .LogTo(Console.WriteLine)
             .EnableDetailedErrors());
+
+        //Settings
+        services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
 
         return services;
     }

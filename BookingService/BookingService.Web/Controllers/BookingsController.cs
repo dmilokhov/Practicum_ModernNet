@@ -61,4 +61,34 @@ public class BookingsController(IBookingOperationsService bookingService) : Cont
         await bookingService.CancelBookingAsync(request, ct);
         return NoContent();
     }
+
+    /// <summary>
+    /// Event booking
+    /// </summary>
+    /// <param name="eventId">Guid - id of an event to book</param>
+    /// <param name="ct">(optional) - cancellation token</param>
+    /// <response code="202">Returns JSON ApiResult with accepted status</response>
+    /// <response code="401">Returns JSON ApiErrorResult with corresponding message if user is unauthorized</response>
+    /// <response code="404">Returns JSON ApiErrorResult with corresponding message if event not found</response>
+    /// <response code="409">Returns JSON ApiErrorResult with corresponding message if there are no available seats for an event</response>
+    [HttpPost("book")]
+    [Authorize]
+    [ProducesResponseType(typeof(ApiResult), StatusCodes.Status202Accepted)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status409Conflict)]
+    [Produces("application/json")]
+    public async Task<ActionResult<ApiResult>> BookAsync(Guid eventId, CancellationToken ct = default)
+    {
+        var userId = this.GetUserId();
+        var submitBookingCommand = new SubmitBookingCommand(eventId, userId);
+        var bookingDto = await bookingService.SubmitBookingAsync(submitBookingCommand, ct);
+
+        return AcceptedAtRoute(RouteNames.GetBookingIdRoute, new { bookingId = bookingDto.Id },
+            new ApiResult<BookingResponse>
+            {
+                Data = bookingDto,
+                Message = "Event booking has been accepted and added to queue."
+            });
+    }
 }

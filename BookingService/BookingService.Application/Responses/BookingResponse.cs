@@ -10,4 +10,5 @@ public class BookingResponse
     public BookingStatuses Status { get; set; }
     public DateTime? CreatedAt { get; set; }
     public DateTime? ProcessedAt { get; set; }
+    public int SeatsAmount { get; set; }
 }
