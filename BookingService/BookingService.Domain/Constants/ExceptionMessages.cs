@@ -11,4 +11,7 @@ public static class ExceptionMessages
 
     public static string NotPossibleToChangeBookingExceptionMsg(BookingStatuses status) =>
         $"It is not possible to change {status.ToString()} booking";
+
+    public static string KafkaTopicNotFound(string msgTypeName) =>
+        $"No Kafka topic configured for event '{msgTypeName}'.";
 }

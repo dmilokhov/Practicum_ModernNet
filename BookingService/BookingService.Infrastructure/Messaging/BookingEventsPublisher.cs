@@ -1,9 +1,7 @@
 ﻿using BookingService.Application.Interfaces.Messaging;
+using BookingService.Domain.Entities;
 using Confluent.Kafka;
-using EventManager.Common.Core.Constants;
-using EventManager.Common.Core.Contracts;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 
 namespace BookingService.Infrastructure.Messaging;
 
@@ -12,29 +10,21 @@ public sealed class BookingEventsPublisher(
     IProducer<string, string> producer) 
     : IBookingEventsPublisher 
 {
-    private static readonly Dictionary<Type, string> Topics = new()
+    public async Task PublishAsync(OutboxMessage message, CancellationToken ct = default)
     {
-        { typeof(BookingConfirmedMsg), TopicNames.BookingConfirmed },
-        { typeof(BookingCancelledMsg), TopicNames.BookingCancelled }
-    };
-
-    public async Task PublishAsync<TMessage>(string key, TMessage msg, CancellationToken ct = default) where TMessage : class
-    {
-        var message = new Message<string, string>
+        var kafkaMessage = new Message<string, string>
         {
-            Key = key,
-            Value = JsonSerializer.Serialize(msg)
+            Key = message.Key,
+            Value = message.Payload
         };
 
-        if (!Topics.TryGetValue(typeof(TMessage), out var topic))
-        {
-            throw new InvalidOperationException(
-                $"No Kafka topic configured for event '{typeof(TMessage).Name}'.");
-        }
+        var result = await producer.ProduceAsync(message.Topic, kafkaMessage, ct);
 
-        var result = await producer.ProduceAsync(topic, message, ct);
-
-        logger.LogInformation("Booking Confirmed msg published to {Topic}. Partition={Partition}, Offset={Offset}",
-            result.Topic, result.Partition.Value, result.Offset.Value);
+        logger.LogInformation(
+            "Message {MessageId} published to {Topic}. Partition={Partition}, Offset={Offset}",
+            message.Id,
+            result.Topic,
+            result.Partition.Value,
+            result.Offset.Value);
     }
 }

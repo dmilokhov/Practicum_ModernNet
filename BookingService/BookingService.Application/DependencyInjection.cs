@@ -13,6 +13,7 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         services.AddSingleton<IBookingFactory, BookingFactory>();
+        services.AddSingleton<IOutboxMessageFactory, OutboxMessageFactory>();
         services.AddScoped<IBookingOperationsService, BookingOperationsService>();
         services.AddValidatorsFromAssemblyContaining<SubmitBookingCommandValidator>();
 

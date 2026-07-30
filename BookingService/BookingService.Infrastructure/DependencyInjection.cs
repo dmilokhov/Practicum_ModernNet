@@ -24,7 +24,9 @@ public static class DependencyInjection
         services.AddSingleton<ITaskQueue<BookingResponse>, InMemoryTaskQueue<BookingResponse>>();
         services.AddSingleton<IEventBookingLockProvider, EventBookingLockProvider>();
         services.AddScoped<IBookingRepository, BookingRepository>();
+        services.AddScoped<IOutboxMessagesRepository, OutboxMessagesRepository>();
         services.AddHostedService<BookingBackgroundService>();
+        services.AddHostedService<OutboxPublisherService>();
 
         //Db Context
         var connectionString = configuration.GetConnectionString("Default")

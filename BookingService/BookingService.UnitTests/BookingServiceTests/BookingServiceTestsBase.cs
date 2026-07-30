@@ -7,7 +7,6 @@ using BookingService.Application.Model.Factories;
 using BookingService.Application.Responses;
 using BookingService.Application.Services;
 using BookingService.Application.Validation;
-using BookingService.Infrastructure.Messaging;
 using BookingService.Infrastructure.Persistence;
 using BookingService.Infrastructure.Persistence.Repositories;
 using BookingService.Infrastructure.Services;
@@ -24,7 +23,7 @@ public abstract class BookingServiceTestsBase : IDisposable
     protected readonly ServiceProvider ServiceProvider;
     protected readonly BookingFactory BookingFactory = new();
     protected readonly IEventBookingLockProvider EventBookingLockProvider = new EventBookingLockProvider();
-    protected readonly Mock<IBookingEventsPublisher> BookingEventsPublisherMock = new();
+    protected readonly Mock<IOutboxMessagesRepository> outboxMessagesRepository = new();
 
     protected BookingServiceTestsBase()
     {
@@ -41,7 +40,7 @@ public abstract class BookingServiceTestsBase : IDisposable
 
         services.AddSingleton<IEventBookingLockProvider>(EventBookingLockProvider);
         services.AddValidatorsFromAssemblyContaining<SubmitBookingCommandValidator>();
-        services.AddSingleton(BookingEventsPublisherMock.Object);
+        services.AddSingleton(outboxMessagesRepository.Object);
 
         ServiceProvider = services.BuildServiceProvider();
     }

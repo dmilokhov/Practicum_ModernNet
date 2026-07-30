@@ -35,44 +35,6 @@ public class DatabaseTests(PostgreSqlFixture fixture)
             .ToListAsync();
 
         tables.Should().Contain("events");
+        tables.Should().Contain("inbox_messages");
     }
-
-    //[Fact]
-    //public async Task CascadeDeleteEvent_Positive_WithAllBookings()
-    //{
-    //    //Arrange
-    //    await fixture.ResetDatabaseAsync();
-    //    await using var context = fixture.CreateContext();
-
-    //    var eventModel = new Event(
-    //        "Test Event",
-    //        "Test description",
-    //        new DateTime(2025, 02, 02, 0, 0, 0, DateTimeKind.Utc),
-    //        new DateTime(2025, 04, 04, 0, 0, 0, DateTimeKind.Utc),
-    //        20);
-
-    //    var user = new User(Guid.NewGuid(), "test", "test", Roles.Admin);
-
-    //    await context.Events.AddAsync(eventModel);
-    //    await context.Users.AddAsync(user);
-
-    //    var bookingModel1 = new Booking(Guid.NewGuid(), eventModel.Id, user.Id, BookingStatuses.Pending, DateTime.UtcNow);
-    //    var bookingModel2 = new Booking(Guid.NewGuid(), eventModel.Id, user.Id, BookingStatuses.Pending, DateTime.UtcNow);
-
-    //    await context.Bookings.AddRangeAsync(bookingModel1, bookingModel2);
-
-    //    await context.SaveChangesAsync();
-
-    //    await using var repositoryContext = fixture.CreateContext();
-    //    var repository = new EventRepository(repositoryContext);
-
-    //    //Act
-    //    await repository.DeleteAsync(eventModel.Id);
-    //    await repository.SaveChangesAsync();
-
-    //    //Assert
-    //    await using var assertionContext = fixture.CreateContext();
-    //    var bookingsForEvent = await assertionContext.Bookings.Where(e => e.EventId == eventModel.Id).ToListAsync();
-    //    bookingsForEvent.Should().BeEmpty();
-    //}
 }

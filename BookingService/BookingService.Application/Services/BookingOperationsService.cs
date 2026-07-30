@@ -1,7 +1,6 @@
 ﻿using BookingService.Application.Commands;
 using BookingService.Application.Interfaces;
 using BookingService.Application.Interfaces.Factories;
-using BookingService.Application.Interfaces.Messaging;
 using BookingService.Application.Interfaces.Repositories;
 using BookingService.Application.Interfaces.Services;
 using BookingService.Application.Model.Factories;
@@ -18,9 +17,9 @@ public class BookingOperationsService(
     IValidator<SubmitBookingCommand> submitBookingValidator,
     IBookingFactory bookingFactory,
     IBookingRepository bookingRepository,
+    IOutboxMessagesRepository outboxMessagesRepository,
     IEventBookingLockProvider lockProvider,
-    ITaskQueue<BookingResponse> bookingQueue,
-    IBookingEventsPublisher publisher) : IBookingOperationsService
+    ITaskQueue<BookingResponse> bookingQueue) : IBookingOperationsService
 {
     public async Task<BookingResponse> SubmitBookingAsync(SubmitBookingCommand command, CancellationToken ct = default)
     {
@@ -37,16 +36,19 @@ public class BookingOperationsService(
         CheckCurrentUser(command.UserRole, command.UserId, bookingEntity.UserId);
 
         bookingEntity.Cancel();
-        await bookingRepository.SaveChangesAsync(ct);
 
-        await publisher.PublishAsync(
+        await outboxMessagesRepository.AddAsync(
             bookingEntity.EventId.ToString(),
             new BookingCancelledMsg(
+                Guid.NewGuid(),
                 bookingEntity.Id,
                 bookingEntity.EventId,
                 bookingEntity.UserId,
+                DateTime.UtcNow,
                 bookingEntity.BookedSeatsAmount),
             ct);
+
+        await bookingRepository.SaveChangesAsync(ct);
     }
 
     public async Task<BookingResponse> GetBookingByIdAsync(GetBookingByIdCommand command, CancellationToken ct = default)
@@ -67,33 +69,38 @@ public class BookingOperationsService(
         }
 
         booking.Confirm();
-        await bookingRepository.SaveChangesAsync(ct);
 
-        await publisher.PublishAsync(
+        await outboxMessagesRepository.AddAsync(
             booking.EventId.ToString(),
             new BookingConfirmedMsg(
+                Guid.NewGuid(),
                 booking.Id,
                 booking.EventId,
                 booking.UserId,
                 booking.CreatedAt,
                 booking.BookedSeatsAmount),
             ct);
+
+        await bookingRepository.SaveChangesAsync(ct);
     }
 
     public async Task RejectBooking(Guid bookingId, CancellationToken ct = default)
     {
         var bookingEntity = await bookingRepository.GetAsync(bookingId, ct);
         bookingEntity.Reject();
-        await bookingRepository.SaveChangesAsync(ct);
 
-        await publisher.PublishAsync(
+        await outboxMessagesRepository.AddAsync(
             bookingEntity.EventId.ToString(),
             new BookingCancelledMsg(
+                Guid.NewGuid(),
                 bookingEntity.Id,
                 bookingEntity.EventId,
                 bookingEntity.UserId,
+                DateTime.UtcNow,
                 bookingEntity.BookedSeatsAmount),
             ct);
+
+        await bookingRepository.SaveChangesAsync(ct);
     }
 
     private async Task<BookingResponse> CreateBookingAsync(SubmitBookingCommand command, CancellationToken ct = default)

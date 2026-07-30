@@ -39,5 +39,6 @@ public class DatabaseTests(PostgreSqlFixture fixture)
             .ToListAsync();
 
         tables.Should().Contain("bookings");
+        tables.Should().Contain("outbox_messages");
     }
 }

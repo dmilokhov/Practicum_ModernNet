@@ -25,6 +25,6 @@ public sealed class PostgreSqlFixture : IAsyncLifetime
     {
         await using var context = CreateContext();
         await context.Database.ExecuteSqlRawAsync(
-            "TRUNCATE TABLE events RESTART IDENTITY CASCADE");
+            "TRUNCATE TABLE events, inbox_messages RESTART IDENTITY CASCADE");
     }
 }
