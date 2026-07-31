@@ -25,9 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="EventManager.Common.AspNetCore">
-      <HintPath>..\..\Common\EventManager.Common.AspNetCore\bin\Release\net9.0\EventManager.Common.AspNetCore.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="..\..\Common\EventManager.Common.AspNetCore\EventManager.Common.AspNetCore.csproj" />
   </ItemGroup>
 
 </Project>

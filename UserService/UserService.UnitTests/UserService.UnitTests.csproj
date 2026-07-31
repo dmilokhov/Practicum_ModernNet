@@ -24,9 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="EventManager.Common.Core">
-      <HintPath>..\..\Common\EventManager.Common.Core\bin\Release\net9.0\EventManager.Common.Core.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="..\..\Common\EventManager.Common.Core\EventManager.Common.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

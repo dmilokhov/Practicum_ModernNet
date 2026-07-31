@@ -2,14 +2,18 @@
 using EventManager.Common.Core.Contracts;
 using EventService.Application.Interfaces.Handlers;
 using EventService.Application.Interfaces.Repositories;
+using EventService.Domain.Constants;
 using EventService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Npgsql;
 using System.Text.Json;
 
 namespace EventService.Infrastructure.Handlers
 {
-    public class BookingCancelledMsgHandler(IEventRepository eventRepository,
+    public class BookingCancelledMsgHandler(
+        ILogger<BookingCancelledMsgHandler> logger,
+        IEventRepository eventRepository,
         IInboxMessageRepository inboxRepository) : IKafkaMessageHandler
     {
         public string Topic => TopicNames.BookingCancelled;
@@ -30,6 +34,7 @@ namespace EventService.Infrastructure.Handlers
             catch(DbUpdateException ex) 
                 when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
             {
+                logger.LogWarning(WarningMessages.MessageWasHandledWarningMsg(msg.Id));
             }
         }
     }

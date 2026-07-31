@@ -86,7 +86,7 @@ POST /Auth/login - авторизация пользователя
 
 ### JWT-аутентификация
 
-API использует JWT Bearer-аутентификацию. Эндпоинты `POST /Auth/register` и `POST /Auth/login` доступны без токена; все остальные API-эндпоинты требуют авторизации.
+API использует JWT Bearer-аутентификацию. Эндпоинты `POST /Auth/register`, `POST /Auth/login`, `GET /events`, `GET /events/{id}` доступны без токена; все остальные API-эндпоинты требуют авторизации.
 
 ### Роли и права доступа
 
@@ -236,9 +236,31 @@ API использует JWT Bearer-аутентификацию. Эндпоин
 - Docker Desktop или Docker Engine с Docker Compose
 - свободные порты `5432`–`5434`, `9092`, `5067`–`5069` и `7113`–`7115`
 
+### Первый запуск после клонирования
+
+```bash
+git clone <repository-url>
+cd practicum
+
+dotnet restore Common/EventManager.Common.sln
+dotnet restore UserService/UserService.sln
+dotnet restore EventService/EventService.sln
+dotnet restore BookingService/BookingService.sln
+```
+
+При необходимости убедитесь, что проекты собираются:
+
+```bash
+dotnet build UserService/UserService.sln --no-restore
+dotnet build EventService/EventService.sln --no-restore
+dotnet build BookingService/BookingService.sln --no-restore
+```
+
+Затем запустите инфраструктуру и сервисы по инструкциям ниже. `dotnet restore` необходим, потому что после чистого клона в репозитории нет восстановленных NuGet-пакетов и артефактов сборки.
+
 ### Настройка JWT-секрета
 
-Параметры JWT находятся в разделе `Jwt` файла `Web/appsettings.json` каждого сервиса. Помимо `Issuer`, `Audience` и `JwtTokenStoreMinutes` необходимо задать секрет подписи:
+Параметры JWT находятся в разделе `Jwt` файлов `UserService/UserService.Web/appsettings.json`, `EventService/EventService.Web/appsettings.json` и `BookingService/BookingService.Web/appsettings.json`. Помимо `Issuer`, `Audience` и `JwtTokenStoreMinutes` необходимо задать секрет подписи:
 
 ```json
 {
@@ -259,9 +281,12 @@ API использует JWT Bearer-аутентификацию. Эндпоин
 Секреты привязаны к проекту через идентификатор в <UserSecretsId> в настройках проекта.
 Они хранятся вне папки проекта, поэтому **никогда не попадут в Git**.
 
-Для корректной работы аутентификации на локальной машине вам необходимо переопределить настройки JWT (в частности, добавить секретный ключ `Key`):
+Для корректной работы аутентификации на локальной машине при необходимости переопределите настройку JWT `Secret`:
 ### Вариант 1: Через терминал (.NET CLI)
-dotnet user-secrets set "Jwt:Key" "ВАШ_СУПЕР_СЕКРЕТНЫЙ_КЛЮЧ_ДЛИНОЙ_ОТ_32_СИМВОЛОВ"
+
+```bash
+dotnet user-secrets set "Jwt:Secret" "ВАШ_СУПЕР_СЕКРЕТНЫЙ_КЛЮЧ_ДЛИНОЙ_ОТ_32_СИМВОЛОВ"
+```
 *Полезные команды CLI:*
 * **Просмотреть все секреты:** `dotnet user-secrets list`
 * **Очистить все секреты:** `dotnet user-secrets clear`
@@ -278,17 +303,39 @@ dotnet user-secrets set "Jwt:Key" "ВАШ_СУПЕР_СЕКРЕТНЫЙ_КЛЮЧ
 * **Windows:** `%APPDATA%\Microsoft\UserSecrets\<UserSecretsId>\secrets.json`
 * **Linux / macOS:** `~/.microsoft/usersecrets/<UserSecretsId>/secrets.json`
 
-### Запуск инфраструктуры
-Из корня репозитория запустите Kafka и три PostgreSQL-базы:
+### Запуск всего стенда в Docker
+Из корня репозитория соберите образы и запустите Kafka, три PostgreSQL-базы и три API:
 
 ```bash
-docker compose up -d
+docker compose up --build -d
 docker compose ps
 ```
 
-Kafka доступна на порту `9092`; базы `users`, `events` и `bookings` — на портах `5432`, `5433` и `5434` соответственно.
+Kafka доступна на порту `9092`; базы `users`, `events` и `bookings` — на портах `5432`, `5433` и `5434`. API будут доступны по адресам:
 
-### Запуск сервисов
+- `http://localhost:5067` — `UserService`;
+- `http://localhost:5068` — `EventService`;
+- `http://localhost:5069` — `BookingService`.
+
+Для просмотра логов конкретного сервиса используйте, например:
+
+```bash
+docker compose logs -f booking-service
+```
+
+Остановить стенд можно командой:
+
+```bash
+docker compose down
+```
+
+### Запуск сервисов через `dotnet run`
+Этот вариант подходит для отладки API на хосте. Сначала поднимите только Kafka и базы данных:
+
+```bash
+docker compose up -d zookeeper kafka users-db events-db bookings-db
+```
+
 Откройте три терминала в корне репозитория и выполните:
 
 ```bash

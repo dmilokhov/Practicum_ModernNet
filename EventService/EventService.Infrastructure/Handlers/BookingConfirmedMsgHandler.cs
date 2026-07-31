@@ -20,11 +20,10 @@ namespace EventService.Infrastructure.Handlers
 
         public async Task HandleAsync(string payload, CancellationToken ct = default)
         {
+            var msg = JsonSerializer.Deserialize<BookingConfirmedMsg>(payload)
+                      ?? throw new JsonException("Invalid BookingConfirmedMsg.");
             try
             {
-                var msg = JsonSerializer.Deserialize<BookingConfirmedMsg>(payload)
-                          ?? throw new JsonException("Invalid BookingConfirmedMsg.");
-
                 await inboxRepository.AddAsync(new InboxMessage { Id = msg.Id, ReceivedAtUtc = DateTime.UtcNow }, ct);
 
                 var eventForBooking = await eventRepository.GetAsync(msg.EventId, ct);
@@ -47,6 +46,7 @@ namespace EventService.Infrastructure.Handlers
             catch (DbUpdateException ex)
                 when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
             {
+                logger.LogWarning(WarningMessages.MessageWasHandledWarningMsg(msg.Id));
             }
         }
     }
