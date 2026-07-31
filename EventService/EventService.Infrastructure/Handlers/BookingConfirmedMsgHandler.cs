@@ -41,13 +41,13 @@ namespace EventService.Infrastructure.Handlers
                     logger.LogError($"Booking {msg.BookingId} - {ErrorMessages.NoAvailableSeatsErrorMsg}");
                     return;
                 }
+
+                await eventRepository.SaveChangesAsync(ct);
             }
             catch (DbUpdateException ex)
                 when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
             {
             }
-
-            await eventRepository.SaveChangesAsync(ct);
         }
     }
 }

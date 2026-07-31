@@ -2,81 +2,57 @@
 
 EventManager - учебный ASP.NET Core Web API для управления событиями и бронированиями.
 
-Проект переведен на чистую архитектуру и разделен на несколько слоев: `Domain`, `Application`, `Infrastructure` и `Web`.
+Проект разделён на три микросервиса. Каждый сервис построен по слоям `Domain`, `Application`, `Infrastructure` и `Web`, владеет собственной PostgreSQL-базой данных и взаимодействует с другими сервисами через Kafka.
 
 ## Структура проекта
 
 ```text
-EventManager.sln
-├── EventManager.Domain
-├── EventManager.Application
-├── EventManager.Infrastructure
-├── EventManager.Web
-├── EventManager.UnitTests
-└── EventManager.IntegrationTests
+Common/
+├── EventManager.Common.Core
+└── EventManager.Common.AspNetCore
+UserService/
+├── UserService.Domain
+├── UserService.Application
+├── UserService.Infrastructure
+└── UserService.Web
+EventService/
+├── EventService.Domain
+├── EventService.Application
+├── EventService.Infrastructure
+└── EventService.Web
+BookingService/
+├── BookingService.Domain
+├── BookingService.Application
+├── BookingService.Infrastructure
+└── BookingService.Web
 ```
 
-### `EventManager.Domain`
+## Состав системы
 
-Доменный слой. Не зависит от остальных проектов.
+| Сервис | Ответственность | База данных | Порт БД | HTTP / HTTPS |
+|---|---|---|---|---|
+| `UserService` | Регистрация, вход и выпуск JWT | `users` | `5432` | `5067` / `7113` |
+| `EventService` | Управление событиями и учёт доступных мест | `events` | `5433` | `5068` / `7114` |
+| `BookingService` | Создание, отмена и фоновая обработка бронирований | `bookings` | `5434` | `5069` / `7115` |
 
-Содержит:
-- сущности предметной области: `Event`, `Booking`;
-- доменные исключения;
-- доменные константы и сообщения валидации;
-- правила, которые относятся к состоянию сущностей, например резервирование и освобождение мест.
-
-### `EventManager.Application`
-
-Слой бизнес-сценариев приложения. Зависит от `Domain`.
-
-Содержит:
-- сервисы приложения: `EventService`, `BookingService`;
-- интерфейсы репозиториев и инфраструктурных сервисов;
-- DTO, фильтры, ответы и маппинг;
-- фабрики, валидаторы и маппер исключений.
-
-Этот слой описывает, что делает приложение, но не знает, как именно данные хранятся или как запросы приходят извне.
-
-### `EventManager.Infrastructure`
-
-Инфраструктурный слой. Зависит от `Application` и `Domain`.
-
-Содержит:
-- `AppDbContext`;
-- конфигурации EF Core;
-- миграции EF Core;
-- реализации репозиториев;
-- in-memory очередь задач;
-- фоновой сервис обработки бронирований;
-- провайдер блокировок для конкурентного бронирования.
-
-### `EventManager.Web`
-
-Входной слой приложения. Зависит от `Application` и `Infrastructure`.
-
-Содержит:
-- `Program.cs` и настройку DI;
-- HTTP-контроллеры;
-- middleware для обработки ошибок и логирования запросов;
-- API-контракты;
-- настройки приложения в `appsettings.json`.
-
-Именно этот проект запускается как Web API.
-
-### Тестовые проекты
-
-- `EventManager.UnitTests` - unit-тесты сервисов приложения.
-- `EventManager.IntegrationTests` - интеграционные тесты репозиториев и базы данных через PostgreSQL/Testcontainers.
+Общие контракты Kafka, JWT-настройки и ASP.NET Core middleware вынесены в каталог `Common`. Для каждого сервиса есть собственные unit- и integration-тесты.
 
 ## API
+### EventService
 - GET /events — получить список событий
 - GET /events/{id} — получить событие по id
 - POST /events — создать событие
 - PUT /events/{id} — обновить событие
 - DELETE /events/{id} — удалить событие
-- POST /events/{id}/book — создать бронирование события (асинхронная обработка)
+
+### BookingService
+- POST /bookings/book — создать бронирование события (асинхронная обработка)
 - GET /bookings/{id} — получить бронирование по id
+- DELETE /bookings/{id} — отмена бронирования по id
+
+### UserService
+POST /Auth/register - регистрация пользователя
+POST /Auth/login - авторизация пользователя
 
 ### GET /events - фильтрация и пагинация
 Поддерживаемые query-параметры:
@@ -95,13 +71,12 @@ EventManager.sln
 - `GET /events?from=2026-01-01&to=2026-01-31`
 - `GET /events?title=workshop&page=2&pageSize=5`
 
-### POST /events/{id}/book
-Создает бронирование для события и помещает его в очередь фоновой обработки.
+### POST /bookings/book
+Создаёт бронирование и помещает его в очередь фоновой обработки `BookingService`.
 
-- Если событие не найдено: `404 Not Found`
-- Если нет свободных мест на событии: `409 Conflict`
-- Если бронирование принято в обработку: `202 Accepted`
-- В ответе возвращается созданный `Booking` со статусом `Pending`
+- При успешном принятии заявки возвращается `202 Accepted`;
+- в ответе содержится `Booking` со статусом `Pending`;
+- итоговый статус можно получить через `GET /bookings/{id}`.
 
 ### GET /bookings/{id}
 Возвращает текущее состояние бронирования.
@@ -120,7 +95,7 @@ API использует JWT Bearer-аутентификацию. Эндпоин
 | Операция | User | Admin |
 |---|---|---|
 | Просмотр событий (`GET /Events`, `GET /Events/{id}`) | Да | Да |
-| Бронирование события (`POST /Events/{eventId}/book`) | Да | Да |
+| Бронирование события (`POST /Bookings/book`) | Да | Да |
 | Создание, изменение и удаление событий | Нет | Да |
 | Просмотр и отмена собственного бронирования | Да | Да |
 | Просмотр и отмена чужого бронирования | Нет | Да |
@@ -182,6 +157,7 @@ API использует JWT Bearer-аутентификацию. Эндпоин
 - `status` (`BookingStatus`) — текущий статус обработки
 - `createdAt` (`DateTime`) — время создания бронирования (UTC)
 - `processedAt` (`DateTime?`) — время завершения обработки (UTC), `null` пока не обработано
+- `bookedSeatsAmount` (`int`) — количество мест для брони
 
 Статусы `BookingStatus`:
 
@@ -190,15 +166,31 @@ API использует JWT Bearer-аутентификацию. Эндпоин
 - `Rejected` — заявка отклонена 
 
 ## Логика фоновой обработки бронирований
-После `POST /events/{id}/book` бронирование не подтверждается мгновенно.
-API кладет заявку в in-memory очередь, затем фоновый воркер (`BookingBackgroundService`) обрабатывает ее:
+После `POST /bookings/book` бронирование не подтверждается мгновенно. `BookingService` сохраняет заявку, помещает её в in-memory очередь, а `BookingBackgroundService` обрабатывает её в фоне: переводит в `Confirmed` либо `Rejected` и создаёт сообщение в outbox. Итоговый статус нужно проверять через `GET /bookings/{id}`.
 
-1. Забирает следующий `Booking` из очереди
-2. Имитирует асинхронную обработку (небольшая задержка)
-3. Обновляет статус бронирования на `Confirmed`
-4. Проставляет `processedAt`
+## Обмен событиями через Kafka
 
-Таким образом, `POST /events/{id}/book` возвращает быстрый `202 Accepted`, а итоговый статус нужно проверять через `GET /bookings/{id}`.
+`BookingService` публикует события из таблицы outbox, а `EventService` подписан на оба топика в consumer group `eventsGroup`. `EventService` использует таблицу inbox для учёта полученных сообщений.
+
+### `BookingConfirmedMsg`
+
+Топик: `booking-confirmed`.
+
+1. После фоновой обработки `BookingService` переводит бронь в `Confirmed` и добавляет `BookingConfirmedMsg` в outbox.
+2. `OutboxPublisherService` публикует сообщение в Kafka с ключом `EventId`.
+3. `BookingConsumerService` в `EventService` получает сообщение и передаёт его `BookingConfirmedMsgHandler`.
+4. Обработчик загружает событие и резервирует указанное число мест. Если событие уже началось или мест недостаточно, доступное число мест не изменяется, а ошибка записывается в лог.
+5. После обработки consumer коммитит Kafka offset.
+
+### `BookingCancelledMsg`
+
+Топик: `booking-cancelled`.
+
+1. При отмене или отклонении `BookingService` добавляет `BookingCancelledMsg` в outbox.
+2. `OutboxPublisherService` публикует его в Kafka с ключом `EventId`.
+3. `BookingConsumerService` передаёт сообщение в `BookingCancelledMsgHandler`.
+4. Обработчик освобождает указанное число мест; значение `AvailableSeats` не может превысить `TotalSeats`.
+5. После обработки consumer коммитит Kafka offset.
 
 ## Примитивы синхронизации
 В проекте используются примитивы синхронизации, чтобы безопасно обрабатывать параллельные запросы на бронирование:
@@ -211,16 +203,16 @@ API кладет заявку в in-memory очередь, затем фонов
 
 2. `SemaphoreSlim` + `ConcurrentDictionary<Guid, SemaphoreSlim>` (`EventBookingLockProvider`)  
    Используется для блокировки по `eventId`:
-   - для одного и того же события одновременно выполняется только одна критическая операция (резерв/освобождение места)
+   - для одного и того же события одновременно выполняется только одна операция создания бронирования в экземпляре `BookingService`
    - для разных событий операции могут выполняться параллельно
-   Это защищает от гонок и овербукинга при одновременных запросах.
+   Это сериализует обработку одновременных запросов внутри экземпляра `BookingService`.
 
 ## Пример использования сценария бронирований
 1. Создать событие:
    - `POST /events`
 2. Получить `id` созданного события из ответа
 3. Создать бронирование:
-   - `POST /events/{id}/book`
+   - `POST /bookings/book`
 4. Получить `bookingId` из ответа (`status = Pending`)
 5. Через несколько секунд проверить статус:
    - `GET /bookings/{bookingId}`
@@ -230,25 +222,23 @@ API кладет заявку в in-memory очередь, затем фонов
 ## Пример сценария с овербукингом
 Допустим, есть событие с `TotalSeats = 1`.
 
-1. Клиент A отправляет `POST /events/{id}/book`  
+1. Клиент A отправляет `POST /bookings/book`
    - получает `202 Accepted`, бронирование `A` со статусом `Pending`
-2. Почти одновременно клиент B отправляет `POST /events/{id}/book`  
-   - запрос выполняется конкурентно, но попадает под ту же блокировку по `eventId`
-3. Первый запрос (A) резервирует единственное место  
-4. Второй запрос (B), дождавшись блокировки, видит `AvailableSeats = 0`  
-   - получает `409 Conflict` (`NoAvailableSeats`)
-5. Воркер подтверждает заявку A, и через `GET /bookings/{A}` статус становится `Confirmed`
+2. Клиент B также отправляет `POST /bookings/book` и получает `202 Accepted`.
+3. После фоновой обработки `BookingService` публикует для обеих заявок `BookingConfirmedMsg`.
+4. `EventService` последовательно обрабатывает сообщения с одним `EventId`: для первой заявки уменьшает `AvailableSeats` до `0`, а для второй не резервирует место и записывает ошибку в лог.
 
-Итог: при высокой конкуренции подтверждается только допустимое число бронирований, а лишние запросы корректно отклоняются.
+Итог: проверка доступности мест выполняется асинхронно в `EventService`, а HTTP-запрос на создание бронирования всегда возвращает `202 Accepted` после принятия заявки.
 
 ## Run
 ### Требования
-- .NET SDK (проект собирается под `net9.0`)
-- PostgreSQL (для запуска API)
+- .NET SDK 9.0
+- Docker Desktop или Docker Engine с Docker Compose
+- свободные порты `5432`–`5434`, `9092`, `5067`–`5069` и `7113`–`7115`
 
 ### Настройка JWT-секрета
 
-Параметры JWT находятся в разделе `Jwt` файла `EventManager.Web/appsettings.json`. Помимо `Issuer`, `Audience` и `JwtTokenStoreMinutes` необходимо задать секрет подписи:
+Параметры JWT находятся в разделе `Jwt` файла `Web/appsettings.json` каждого сервиса. Помимо `Issuer`, `Audience` и `JwtTokenStoreMinutes` необходимо задать секрет подписи:
 
 ```json
 {
@@ -260,7 +250,6 @@ API кладет заявку в in-memory очередь, затем фонов
   }
 }
 ```
-
 В production не храните секрет в репозитории и не используйте пример выше. Передавайте его через переменную окружения `Jwt__Secret` или безопасное хранилище секретов. Используйте уникальное криптографически случайное значение длиной не менее 32 байт и регулярно меняйте его при необходимости.
 
 ## Актуальная структура секретов для JWT
@@ -272,11 +261,7 @@ API кладет заявку в in-memory очередь, затем фонов
 
 Для корректной работы аутентификации на локальной машине вам необходимо переопределить настройки JWT (в частности, добавить секретный ключ `Key`):
 ### Вариант 1: Через терминал (.NET CLI)
-
-```bash
 dotnet user-secrets set "Jwt:Key" "ВАШ_СУПЕР_СЕКРЕТНЫЙ_КЛЮЧ_ДЛИНОЙ_ОТ_32_СИМВОЛОВ"
-```
-
 *Полезные команды CLI:*
 * **Просмотреть все секреты:** `dotnet user-secrets list`
 * **Очистить все секреты:** `dotnet user-secrets clear`
@@ -287,81 +272,63 @@ dotnet user-secrets set "Jwt:Key" "ВАШ_СУПЕР_СЕКРЕТНЫЙ_КЛЮЧ
 1. В окне **Solution Explorer** нажмите правой кнопкой мыши по проекту.
 2. Выберите **Manage User Secrets** (Управление секретами).
 3. В открывшийся файл `secrets.json` вставьте блок JSON из раздела «Актуальная структура секретов для JWT» выше и сохраните файл.
-
 ## Где физически хранятся эти файлы?
-
 Если вам нужно найти файл `secrets.json` вручную на диске:
 
 * **Windows:** `%APPDATA%\Microsoft\UserSecrets\<UserSecretsId>\secrets.json`
 * **Linux / macOS:** `~/.microsoft/usersecrets/<UserSecretsId>/secrets.json`
 
-## Настройка строки подключения
-Приложение использует строку подключения из `EventManager/appsettings.json`:
+### Запуск инфраструктуры
+Из корня репозитория запустите Kafka и три PostgreSQL-базы:
 
-`ConnectionStrings:Default`
-
-Пример (значения можно изменить под вашу локальную БД):
-```json
-{
-  "ConnectionStrings": {
-    "Default": "Host=localhost;Port=5432;Database=eventapi;Username=postgres;Password=postgres"
-  }
-}
+```bash
+docker compose up -d
+docker compose ps
 ```
 
-### Схема БД и миграции EF Core
-Схема базы данных управляется миграциями EF Core. Файлы миграций находятся в `EventManager/Migrations`.
+Kafka доступна на порту `9092`; базы `users`, `events` и `bookings` — на портах `5432`, `5433` и `5434` соответственно.
 
-При запуске API неопубликованные миграции применяются автоматически (`db.Database.Migrate()` в `Program.cs`). Для локальной разработки достаточно поднять PostgreSQL и запустить приложение — отдельно применять миграции не обязательно.
+### Запуск сервисов
+Откройте три терминала в корне репозитория и выполните:
+
+```bash
+dotnet run --project UserService/UserService.Web --launch-profile http
+```
+
+```bash
+dotnet run --project EventService/EventService.Web --launch-profile http
+```
+
+```bash
+dotnet run --project BookingService/BookingService.Web --launch-profile http
+```
+
+Миграции EF Core применяются автоматически при запуске каждого Web-проекта. Все три сервиса должны использовать одинаковые значения `Jwt:Issuer`, `Jwt:Audience` и `Jwt:Secret`.
+
+### Схема БД и миграции EF Core
+Схема базы данных управляется миграциями EF Core. Файлы миграций находятся в инфрастуктурном слое сервисов в папке `/Migrations`.
+
+При запуске API неопубликованные миграции применяются автоматически (`db.Database.Migrate()` в `Program.cs`). 
 
 Создать новую миграцию после изменения моделей:
 
 ```bash
-dotnet ef migrations add <MigrationName> -p EventManager.Infrastructure -s EventManager.Web
+dotnet ef migrations add <MigrationName> -p <ServiceName>.Infrastructure -s <ServiceName>.Web
 ```
-
-Запуск API:
-
-```bash
-dotnet restore
-dotnet build
-dotnet run --launch-profile https
-```
-
-> **Примечание.** Если база была создана ранее через `EnsureCreated` (без таблицы `__EFMigrationsHistory`), перед первым запуском с миграциями может потребоваться пересоздать БД или выполнить `dotnet ef database update` на чистой базе.
 
 ## Run tests
-В solution два тестовых проекта:
-
-| Проект | Назначение | База данных |
-|--------|------------|-------------|
-| `EventManagerTests` (`EventManager.UnitTests`) | Unit-тесты сервисов | EF Core InMemory (`UseInMemoryDatabase`) |
-| `EventManager.IntegrationTests` | Integration-тесты репозиториев | PostgreSQL через [Testcontainers](https://dotnet.testcontainers.org/) |
-
-### Unit-тесты
-PostgreSQL и Docker не требуются.
+Для запуска unit-тестов:
 
 ```bash
-cd EventManager.UnitTests
-dotnet test
+dotnet test BookingService/BookingService.UnitTests/BookingService.UnitTests.csproj
+dotnet test EventService/EventService.UnitTests/EventService.UnitTests.csproj
+dotnet test UserService/UserService.UnitTests/UserService.UnitTests.csproj
 ```
 
-### Integration-тесты
-Для запуска нужен **Docker** (Docker Desktop или Docker Engine): Testcontainers поднимает контейнер `postgres:16-alpine` на время прогона тестов. Локальный PostgreSQL для integration-тестов настраивать не нужно.
-
-```bash
-cd EventManager.IntegrationTests
-dotnet test
-```
-
-Запустить все тесты:
-
-```bash
-dotnet test
-```
+Интеграционные тесты Booking и Event Service используют Testcontainers и требуют доступного Docker daemon.
 
 ## Swagger
-https://localhost:7113/swagger/index.html
+`http://localhost:5067/swagger`, `http://localhost:5068/swagger`, `http://localhost:5069/swagger`
 
 Получить и использовать JWT токен через Swagger можно так:
 

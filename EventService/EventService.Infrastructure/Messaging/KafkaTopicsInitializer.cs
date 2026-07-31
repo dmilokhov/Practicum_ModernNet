@@ -48,6 +48,12 @@ public class KafkaTopicsInitializer(
             Name = TopicNames.BookingConfirmed,
             NumPartitions = 3,
             ReplicationFactor = 1
-        }
+        },
+        new()
+        {
+            Name = TopicNames.BookingCancelled,
+            NumPartitions = 3,
+            ReplicationFactor = 1
+        },
     ];
 }
