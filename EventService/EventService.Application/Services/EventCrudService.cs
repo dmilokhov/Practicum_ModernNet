@@ -5,6 +5,7 @@ using EventService.Application.Model.DTOs;
 using EventService.Application.Model.Filters;
 using EventService.Application.Model.Mapping;
 using EventService.Application.Responses;
+using EventService.Domain.Constants;
 
 namespace EventService.Application.Services;
 
@@ -20,6 +21,13 @@ public class EventCrudService(IEventRepository repository, IEventFilterValidator
         var items = data.Select(e => e.ToDto()).ToList();
 
         return new PagedResponse<FullEventDto>(items, filter.Page, filter.PageSize, totalItems, totalPages);
+    }
+
+    public async Task<IReadOnlyList<FullEventDto>> GetTopTenPopularEventsAsync(CancellationToken ct)
+    {
+        var events = await repository.GetTopBySalesAsync(ApplicationConstants.PopularEventsCount, ct);
+
+        return events.Select(e => e.ToDto()).ToList();
     }
 
     public async Task<FullEventDto> GetEventAsync(Guid id, CancellationToken ct = default)
