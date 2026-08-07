@@ -1,6 +1,6 @@
 ﻿namespace EventManager.Common.Core.Settings;
 
-public class KafkaSettings
+public sealed class KafkaSettings
 {
     public const string SectionName = "Kafka";
     public string BootstrapServers { get; set; } = string.Empty;
