@@ -1,4 +1,5 @@
 ﻿using EventService.Application.Interfaces;
+using EventService.Application.Interfaces.Cache;
 using EventService.Application.Interfaces.Repositories;
 using EventService.Application.Interfaces.Services;
 using EventService.Application.Model.DTOs;
@@ -9,7 +10,10 @@ using EventService.Domain.Constants;
 
 namespace EventService.Application.Services;
 
-public class EventCrudService(IEventRepository repository, IEventFilterValidator eventFilterValidator) : IEventCrudService
+public class EventCrudService(
+    IEventRepository repository,
+    IEventFilterValidator eventFilterValidator,
+    ICacheService cacheService) : IEventCrudService
 {
     public async Task<PagedResponse<FullEventDto>> GetEventsAsync(EventFilter filter, CancellationToken ct = default)
     {
@@ -25,15 +29,42 @@ public class EventCrudService(IEventRepository repository, IEventFilterValidator
 
     public async Task<IReadOnlyList<FullEventDto>> GetTopTenPopularEventsAsync(CancellationToken ct)
     {
-        var events = await repository.GetTopBySalesAsync(ApplicationConstants.PopularEventsCount, ct);
+        var cachedData = await cacheService.GetAsync<IReadOnlyList<FullEventDto>>(CacheConstants.EventsTop10Key);
 
-        return events.Select(e => e.ToDto()).ToList();
+        if (cachedData != null)
+        {
+            return cachedData;
+        }
+
+        var dbEvents = await repository.GetTopBySalesAsync(ApplicationConstants.PopularEventsCount, ct);
+        var result = dbEvents.Select(e => e.ToDto()).ToList();
+        
+        await cacheService.SendAsync(
+            CacheConstants.EventsTop10Key,
+            result,
+            TimeSpan.FromMinutes(CacheConstants.CachedTopEventsTtlMinutes));
+
+        return result;
     }
 
     public async Task<FullEventDto> GetEventAsync(Guid id, CancellationToken ct = default)
     {
-        var eventData = await repository.GetAsync(id, ct);
-        return eventData.ToDto();
+        var cachedData = await cacheService.GetAsync<FullEventDto>(CacheConstants.EventKey(id));
+
+        if (cachedData != null) 
+        {
+            return cachedData;
+        }
+
+        var dbEvent  = await repository.GetAsync(id, ct);
+        var result = dbEvent.ToDto();
+
+        await cacheService.SendAsync(
+            CacheConstants.EventKey(id),
+            result,
+            TimeSpan.FromMinutes(CacheConstants.CachedEventByIdTtlMinutes));
+
+        return result;
     }
 
     public async Task<FullEventDto> AddEventAsync(EventDto eventModel, CancellationToken ct = default)
