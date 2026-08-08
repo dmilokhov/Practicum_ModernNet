@@ -1,5 +1,6 @@
 ﻿using EventManager.Common.Core.Constants;
 using EventManager.Common.Core.Contracts;
+using EventService.Application.Interfaces.Cache;
 using EventService.Application.Interfaces.Handlers;
 using EventService.Application.Interfaces.Repositories;
 using EventService.Domain.Constants;
@@ -14,7 +15,8 @@ namespace EventService.Infrastructure.Handlers
     public class BookingConfirmedMsgHandler(
         ILogger<BookingConfirmedMsgHandler> logger,
         IEventRepository eventRepository,
-        IInboxMessageRepository inboxRepository) : IKafkaMessageHandler
+        IInboxMessageRepository inboxRepository,
+        IEventCacheInvalidator eventCacheInvalidator) : IKafkaMessageHandler
     {
         public string Topic => TopicNames.BookingConfirmed;
 
@@ -42,6 +44,8 @@ namespace EventService.Infrastructure.Handlers
                 }
 
                 await eventRepository.SaveChangesAsync(ct);
+                await eventCacheInvalidator.InvalidateAsync(msg.EventId);
+
             }
             catch (DbUpdateException ex)
                 when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })

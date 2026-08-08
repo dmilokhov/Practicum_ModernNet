@@ -1,9 +1,11 @@
 ﻿using Confluent.Kafka;
 using EventManager.Common.Core.Constants;
 using EventManager.Common.Core.Settings;
+using EventService.Application.Interfaces.Cache;
 using EventService.Application.Interfaces.Handlers;
 using EventService.Application.Interfaces.Messaging;
 using EventService.Application.Interfaces.Repositories;
+using EventService.Infrastructure.Cache;
 using EventService.Infrastructure.Handlers;
 using EventService.Infrastructure.Messaging;
 using EventService.Infrastructure.Messaging.Consumers;
@@ -74,6 +76,8 @@ public static class DependencyInjection
             AbortOnConnectFail = false
         };
         services.AddSingleton<IConnectionMultiplexer>(await ConnectionMultiplexer.ConnectAsync(redisOptions));
+        services.AddSingleton<ICacheService, RedisCacheService>();
+        services.AddSingleton<IEventCacheInvalidator, EventCacheInvalidator>();
 
         return services;
     }

@@ -1,5 +1,6 @@
 ﻿using EventManager.Common.Core.Constants;
 using EventManager.Common.Core.Contracts;
+using EventService.Application.Interfaces.Cache;
 using EventService.Application.Interfaces.Handlers;
 using EventService.Application.Interfaces.Repositories;
 using EventService.Domain.Constants;
@@ -14,7 +15,8 @@ namespace EventService.Infrastructure.Handlers
     public class BookingCancelledMsgHandler(
         ILogger<BookingCancelledMsgHandler> logger,
         IEventRepository eventRepository,
-        IInboxMessageRepository inboxRepository) : IKafkaMessageHandler
+        IInboxMessageRepository inboxRepository,
+        IEventCacheInvalidator eventCacheInvalidator) : IKafkaMessageHandler
     {
         public string Topic => TopicNames.BookingCancelled;
 
@@ -30,6 +32,7 @@ namespace EventService.Infrastructure.Handlers
                 var eventForBooking = await eventRepository.GetAsync(msg.EventId, ct);
                 eventForBooking.ReleaseSeats(msg.SeatsAmount);
                 await eventRepository.SaveChangesAsync(ct);
+                await eventCacheInvalidator.InvalidateAsync(msg.EventId);
             }
             catch(DbUpdateException ex) 
                 when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })

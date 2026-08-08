@@ -13,7 +13,8 @@ namespace EventService.Application.Services;
 public class EventCrudService(
     IEventRepository repository,
     IEventFilterValidator eventFilterValidator,
-    ICacheService cacheService) : IEventCrudService
+    ICacheService cacheService,
+    IEventCacheInvalidator eventCacheInvalidator) : IEventCrudService
 {
     public async Task<PagedResponse<FullEventDto>> GetEventsAsync(EventFilter filter, CancellationToken ct = default)
     {
@@ -81,12 +82,14 @@ public class EventCrudService(
     {
         await repository.DeleteAsync(eventId, ct);
         await repository.SaveChangesAsync(ct);
+        await eventCacheInvalidator.InvalidateAsync(eventId);
     }
 
     public async Task UpdateEventAsync(Guid eventId, EventDto data, CancellationToken ct = default)
     {
         await repository.UpdateAsync(eventId, data.ToEntity(), ct);
         await repository.SaveChangesAsync(ct);
+        await eventCacheInvalidator.InvalidateAsync(eventId);
     }
 
 }
