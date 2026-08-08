@@ -49,7 +49,7 @@ public class EventsController(IEventCrudService eventService) : ControllerBase
     /// <param name="ct">(optional) - cancellation token</param>
     /// <response code="200"> Returns JSON ApiResult with events data. 
     /// If there are no any - empty list with corresponding message</response>
-    [ProducesResponseType(typeof(ApiResult<PagedResponse<FullEventDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResult<IReadOnlyList<FullEventDto>>), StatusCodes.Status200OK)]
     [Produces("application/json")]
     [HttpGet("top")]
     public async Task<ActionResult<ApiResult<IReadOnlyList<FullEventDto>>>> GetTop(CancellationToken ct = default)

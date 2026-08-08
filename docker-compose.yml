@@ -124,12 +124,15 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__Default: Host=events-db;Port=5432;Database=events;Username=postgres;Password=postgres
       Kafka__BootstrapServers: kafka:29092
+      Redis__EndPoint: redis:6379
     ports:
       - "5068:8080"
     depends_on:
       events-db:
         condition: service_healthy
       kafka:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
   booking-service:

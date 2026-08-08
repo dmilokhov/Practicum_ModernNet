@@ -8,5 +8,6 @@ public sealed class EventCacheInvalidator(ICacheService cacheService) : IEventCa
     public async Task InvalidateAsync(Guid eventId)
     {
         await cacheService.RemoveAsync(CacheConstants.EventKey(eventId));
+        await cacheService.RemoveAsync(CacheConstants.EventsTop10Key);
     }
 }

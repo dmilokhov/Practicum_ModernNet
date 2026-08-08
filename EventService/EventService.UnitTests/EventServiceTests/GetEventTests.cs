@@ -5,6 +5,7 @@ using EventService.Application.Model.DTOs;
 using EventService.Application.Services;
 using EventService.Domain.Constants;
 using EventService.Domain.Entities;
+using EventManager.Common.Core.Exceptions;
 using FluentAssertions;
 using Moq;
 
@@ -63,6 +64,28 @@ public class GetEventTests
             CacheConstants.EventKey(eventEntity.Id),
             It.Is<FullEventDto>(cached => cached.Id == eventEntity.Id),
             TimeSpan.FromMinutes(CacheConstants.CachedEventByIdTtlMinutes)), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetEventAsync_WhenEventDoesNotExist_ThrowsNotFoundException()
+    {
+        // Arrange
+        var eventId = Guid.NewGuid();
+        var repository = new Mock<IEventRepository>(MockBehavior.Strict);
+        var cache = new Mock<ICacheService>(MockBehavior.Strict);
+        var invalidator = new Mock<IEventCacheInvalidator>(MockBehavior.Strict);
+        cache.Setup(x => x.GetAsync<FullEventDto>(CacheConstants.EventKey(eventId)))
+            .ReturnsAsync((FullEventDto?)null);
+        repository.Setup(x => x.GetAsync(eventId, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new EntityNotFoundException(nameof(Event), eventId));
+        var service = CreateService(repository, cache, invalidator);
+
+        // Act
+        var action = () => service.GetEventAsync(eventId);
+
+        // Assert
+        await action.Should().ThrowAsync<EntityNotFoundException>()
+            .WithMessage($"{nameof(Event)} {eventId} is not found");
     }
 
     [Fact]
