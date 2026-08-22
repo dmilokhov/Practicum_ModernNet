@@ -24,6 +24,16 @@ public class EventRepository(AppDbContext context) : IEventRepository
         return (items, totalCount);
     }
 
+    public async Task<IReadOnlyList<Event>> GetTopBySalesAsync(int count, CancellationToken ct = default)
+    {
+        return await context.Events.AsNoTracking()
+                                   .Where(e => e.TotalSeats > 0)
+                                   .OrderByDescending(e => (double)(e.TotalSeats - e.AvailableSeats) / e.TotalSeats)
+                                   .ThenBy(e => e.StartAt)
+                                   .Take(count)
+                                   .ToListAsync(ct);
+    }
+
     public async Task<Event> GetAsync(Guid id, CancellationToken ct = default)
     {
         return await TryGetEventAsync(id, ct);

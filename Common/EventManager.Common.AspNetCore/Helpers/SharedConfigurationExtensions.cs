@@ -1,12 +1,13 @@
-﻿using EventManager.Common.Core.Settings;
+﻿using EventManager.Common.Core.Constants;
+using EventManager.Common.Core.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Reflection;
 using System.Text;
-using Microsoft.OpenApi.Models;
 
 namespace EventManager.Common.AspNetCore.Helpers;
 
@@ -15,11 +16,11 @@ public static class SharedConfigurationExtensions
     public static void AddAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
         JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
-        var jwtSettings = configuration.GetSection("Jwt").Get<JwtSettings>();
+        var jwtSettings = configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>();
 
         if (jwtSettings == null || string.IsNullOrEmpty(jwtSettings.Secret))
         {
-            throw new InvalidOperationException("JWT settings are not configured properly in appsettings.json");
+            throw new InvalidOperationException(CommonExceptionMessages.SettingAreNotConfiguredMsg(JwtSettings.SectionName));
         }
 
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));

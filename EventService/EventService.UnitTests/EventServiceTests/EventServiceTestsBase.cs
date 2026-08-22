@@ -1,4 +1,5 @@
 ﻿using EventService.Application.Interfaces;
+using EventService.Application.Interfaces.Cache;
 using EventService.Application.Interfaces.Repositories;
 using EventService.Application.Interfaces.Services;
 using EventService.Application.Model.DTOs;
@@ -9,6 +10,7 @@ using EventService.Infrastructure.Persistence;
 using EventService.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Moq;
 
 namespace EventService.UnitTests.EventServiceTests;
 
@@ -70,6 +72,12 @@ public abstract class EventServiceTestsBase : IDisposable
     protected EventServiceTestsBase()
     {
         var services = new ServiceCollection();
+        var cacheService = new Mock<ICacheService>();
+        var eventCacheInvalidator = new Mock<IEventCacheInvalidator>();
+
+        eventCacheInvalidator
+            .Setup(x => x.InvalidateAsync(It.IsAny<Guid>()))
+            .Returns(Task.CompletedTask);
 
         var dbName = Guid.NewGuid().ToString();
 
@@ -78,6 +86,8 @@ public abstract class EventServiceTestsBase : IDisposable
 
         services.AddScoped<IEventRepository, EventRepository>();
         services.AddScoped<IEventFilterValidator, EventFilterValidator>();
+        services.AddScoped<ICacheService>(_ => cacheService.Object);
+        services.AddScoped<IEventCacheInvalidator>(_ => eventCacheInvalidator.Object);
         services.AddScoped<IEventCrudService, EventCrudService>();
 
         ServiceProvider = services.BuildServiceProvider();

@@ -1,8 +1,11 @@
 ﻿using Confluent.Kafka;
+using EventManager.Common.Core.Constants;
 using EventManager.Common.Core.Settings;
+using EventService.Application.Interfaces.Cache;
 using EventService.Application.Interfaces.Handlers;
 using EventService.Application.Interfaces.Messaging;
 using EventService.Application.Interfaces.Repositories;
+using EventService.Infrastructure.Cache;
 using EventService.Infrastructure.Handlers;
 using EventService.Infrastructure.Messaging;
 using EventService.Infrastructure.Messaging.Consumers;
@@ -12,12 +15,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using StackExchange.Redis;
 
 namespace EventService.Infrastructure;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    public static async Task<IServiceCollection> AddInfrastructureAsync(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddScoped<IEventRepository, EventRepository>();
         services.AddScoped<IInboxMessageRepository, InboxMessageRepository>();
@@ -32,6 +36,7 @@ public static class DependencyInjection
 
         //Settings
         services.Configure<KafkaSettings>(configuration.GetSection(KafkaSettings.SectionName));
+        services.Configure<RedisSettings>(configuration.GetSection(RedisSettings.SectionName));
 
         //Kafka
         services.AddScoped<IKafkaMessageHandler, BookingConfirmedMsgHandler>();
@@ -55,6 +60,24 @@ public static class DependencyInjection
 
         services.AddHostedService<KafkaTopicsInitializer>();
         services.AddHostedService<BookingConsumerService>();
+
+        //Redis
+        var redisSettings = configuration.GetSection(RedisSettings.SectionName).Get<RedisSettings>();
+        if (redisSettings == null)
+        {
+            throw new InvalidOperationException(CommonExceptionMessages.SettingAreNotConfiguredMsg(RedisSettings.SectionName));
+        }
+
+        var redisOptions = new ConfigurationOptions
+        {
+            EndPoints = { redisSettings.EndPoint },
+            ConnectTimeout = redisSettings.ConnectTimeout,
+            SyncTimeout = redisSettings.SyncTimeout,
+            AbortOnConnectFail = false
+        };
+        services.AddSingleton<IConnectionMultiplexer>(await ConnectionMultiplexer.ConnectAsync(redisOptions));
+        services.AddSingleton<ICacheService, RedisCacheService>();
+        services.AddSingleton<IEventCacheInvalidator, EventCacheInvalidator>();
 
         return services;
     }

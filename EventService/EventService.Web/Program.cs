@@ -19,7 +19,7 @@ if(isDevelopment)
 
 //services
 builder.Services.AddApplication();
-builder.Services.AddInfrastructure(builder.Configuration);
+await builder.Services.AddInfrastructureAsync(builder.Configuration);
 builder.Services.AddPresentation(builder.Configuration);
 
 builder.Logging.AddConsole();

@@ -26,9 +26,7 @@ public class EventsController(IEventCrudService eventService) : ControllerBase
     /// <param name="ct">(optional) - cancellation token</param>
     /// <response code="200"> Returns JSON ApiResult with events data. 
     /// If there are no any - empty list with corresponding message</response>
-    /// <response code="401">Returns JSON ApiErrorResult with corresponding message if user is unauthorized</response>
     [ProducesResponseType(typeof(ApiResult<PagedResponse<FullEventDto>>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)]
     [Produces("application/json")]
     [HttpGet]
     public async Task<ActionResult<ApiResult<PagedResponse<FullEventDto>>>> GetAll([FromQuery]EventFilter filter, 
@@ -44,16 +42,36 @@ public class EventsController(IEventCrudService eventService) : ControllerBase
         });
     }
 
+
+    /// <summary>
+    /// Get top 10 popular events
+    /// </summary>
+    /// <param name="ct">(optional) - cancellation token</param>
+    /// <response code="200"> Returns JSON ApiResult with events data. 
+    /// If there are no any - empty list with corresponding message</response>
+    [ProducesResponseType(typeof(ApiResult<IReadOnlyList<FullEventDto>>), StatusCodes.Status200OK)]
+    [Produces("application/json")]
+    [HttpGet("top")]
+    public async Task<ActionResult<ApiResult<IReadOnlyList<FullEventDto>>>> GetTop(CancellationToken ct = default)
+    {
+        var data = await eventService.GetTopTenPopularEventsAsync(ct);
+        var msg = data.Count > 0 ? "Getting events" : "There are no events";
+
+        return Ok(new ApiResult<IReadOnlyList<FullEventDto>>
+        {
+            Data = data,
+            Message = msg
+        });
+    }
+
     /// <summary>
     /// Get an event by its Guid
     /// </summary>
     /// <param name="id">Guid - id of an event to search</param>
     /// <param name="ct">(optional) - cancellation token</param>
     /// <response code="200"> Returns JSON ApiResult with an event data. </response>
-    /// <response code="401">Returns JSON ApiErrorResult with corresponding message if user is unauthorized</response>
     /// <response code="404">Returns JSON ApiErrorResult with corresponding message if event not found</response>
     [ProducesResponseType(typeof(ApiResult<FullEventDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status404NotFound)]
     [Produces("application/json")]
     [HttpGet("{id:guid}", Name = RouteNames.GetAsyncRoute)]
