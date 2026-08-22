@@ -1,4 +1,7 @@
 using EventManager.Common.AspNetCore.Helpers;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using System.Text.Json.Serialization;
 
 namespace BookingService.Web;
@@ -12,6 +15,8 @@ public static class DependencyInjection
 
         services.AddSwagger();
         services.AddAuthentication(configuration);
+
+        services.AddOtl(configuration);
 
         return services;
     }

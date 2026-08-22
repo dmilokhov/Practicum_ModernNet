@@ -1,8 +1,9 @@
 using BookingService.Application;
 using BookingService.Infrastructure;
 using BookingService.Infrastructure.Persistence;
-using EventManager.Common.AspNetCore.Middleware;
 using BookingService.Web;
+using EventManager.Common.AspNetCore.Middleware;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 var isDevelopment = builder.Environment.IsDevelopment();
@@ -22,7 +23,9 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddPresentation(builder.Configuration);
 
-builder.Logging.AddConsole();
+builder.Host.UseSerilog((ctx, cfg) =>
+    cfg.ReadFrom.Configuration(ctx.Configuration)
+        .WriteTo.Console(new CompactJsonFormatter()));
 
 //after build
 var app = builder.Build();
@@ -46,5 +49,6 @@ app.UseAuthorization();
 app.Services.ApplyMigrations();
 
 app.MapControllers();
+app.MapPrometheusScrapingEndpoint();
 
 app.Run();
