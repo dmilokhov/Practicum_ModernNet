@@ -1,8 +1,10 @@
+using EventManager.Common.AspNetCore.Middleware;
 using EventService.Application;
 using EventService.Infrastructure;
 using EventService.Infrastructure.Persistence;
-using EventManager.Common.AspNetCore.Middleware;
 using EventService.Web;
+using Serilog;
+using Serilog.Formatting.Compact;
 
 var builder = WebApplication.CreateBuilder(args);
 var isDevelopment = builder.Environment.IsDevelopment();
@@ -22,7 +24,9 @@ builder.Services.AddApplication();
 await builder.Services.AddInfrastructureAsync(builder.Configuration);
 builder.Services.AddPresentation(builder.Configuration);
 
-builder.Logging.AddConsole();
+builder.Host.UseSerilog((ctx, cfg) =>
+    cfg.ReadFrom.Configuration(ctx.Configuration)
+        .WriteTo.Console(new CompactJsonFormatter()));
 
 //after build
 var app = builder.Build();
@@ -37,6 +41,7 @@ if (isDevelopment)
 }
 
 app.UseRequestLogging();
+app.MapPrometheusScrapingEndpoint();
 app.UseHttpsRedirection();
 app.UseRouting();
 

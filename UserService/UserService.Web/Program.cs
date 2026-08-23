@@ -1,4 +1,6 @@
 using EventManager.Common.AspNetCore.Middleware;
+using Serilog;
+using Serilog.Formatting.Compact;
 using UserService.Application;
 using UserService.Infrastructure;
 using UserService.Infrastructure.Persistence;
@@ -22,7 +24,9 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddPresentation(builder.Configuration);
 
-builder.Logging.AddConsole();
+builder.Host.UseSerilog((ctx, cfg) =>
+    cfg.ReadFrom.Configuration(ctx.Configuration)
+        .WriteTo.Console(new CompactJsonFormatter()));
 
 //after build
 var app = builder.Build();
@@ -37,6 +41,7 @@ if (isDevelopment)
 }
 
 app.UseRequestLogging();
+app.MapPrometheusScrapingEndpoint();
 app.UseHttpsRedirection();
 app.UseRouting();
 

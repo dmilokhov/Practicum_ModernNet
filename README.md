@@ -329,6 +329,32 @@ docker compose logs -f booking-service
 docker compose down
 ```
 
+## Наблюдаемость
+
+Для мониторинга сервисов в compose-стенд добавлены следующие инструменты:
+
+| Инструмент | Назначение | UI |
+|---|---|---|
+| Prometheus | Сбор и хранение метрик сервисов с endpoint'ов `/metrics` | [http://localhost:9090](http://localhost:9090) |
+| Grafana | Визуализация метрик и создание дашбордов | [http://localhost:3000](http://localhost:3000) |
+| Jaeger | Просмотр распределённых трассировок | [http://localhost:16686](http://localhost:16686) |
+
+Все Web-сервисы инструментированы OpenTelemetry: они публикуют runtime- и HTTP-метрики в `/metrics` и отправляют трассировки в Jaeger по OTLP gRPC.
+
+Если весь стенд ещё не запущен, поднимите его вместе с мониторингом:
+
+```bash
+docker compose up --build -d
+```
+
+Если API-сервисы уже запущены, достаточно поднять только компоненты наблюдаемости:
+
+```bash
+docker compose up -d prometheus grafana jaeger
+```
+
+В Grafana используйте Prometheus как источник данных с адресом `http://prometheus:9090`. Учётные данные Grafana по умолчанию: `admin` / `admin`.
+
 ### Запуск сервисов через `dotnet run`
 Этот вариант подходит для отладки API на хосте. Сначала поднимите только Kafka и базы данных:
 

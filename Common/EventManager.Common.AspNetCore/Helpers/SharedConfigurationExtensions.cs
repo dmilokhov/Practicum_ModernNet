@@ -5,6 +5,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using System.IdentityModel.Tokens.Jwt;
 using System.Reflection;
 using System.Text;
@@ -90,5 +93,20 @@ public static class SharedConfigurationExtensions
                 }
             });
         });
+    }
+
+    public static void AddOtl(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddOpenTelemetry()
+            .ConfigureResource(r => r.AddService(serviceName: configuration["ServiceName"]!))
+            .WithTracing(t => t
+                .AddAspNetCoreInstrumentation(o => o.Filter = httpContext => !httpContext.Request.Path.StartsWithSegments("/metrics"))
+                .AddHttpClientInstrumentation()
+                .AddEntityFrameworkCoreInstrumentation()
+                .AddOtlpExporter(o => o.Endpoint = new Uri(configuration["Otlp:Endpoint"]!)))
+            .WithMetrics(m => m
+                .AddAspNetCoreInstrumentation()
+                .AddRuntimeInstrumentation()
+                .AddPrometheusExporter());
     }
 }

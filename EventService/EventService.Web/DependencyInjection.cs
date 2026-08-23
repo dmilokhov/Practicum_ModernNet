@@ -39,6 +39,7 @@ public static class DependencyInjection
 
         services.AddSwagger();
         services.AddAuthentication(configuration);
+        services.AddOtl(configuration);
 
         return services;
     }
