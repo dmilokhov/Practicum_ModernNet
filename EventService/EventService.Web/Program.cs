@@ -41,6 +41,7 @@ if (isDevelopment)
 }
 
 app.UseRequestLogging();
+app.MapPrometheusScrapingEndpoint();
 app.UseHttpsRedirection();
 app.UseRouting();
 
@@ -50,6 +51,5 @@ app.UseAuthorization();
 app.Services.ApplyMigrations();
 
 app.MapControllers();
-app.MapPrometheusScrapingEndpoint();
 
 app.Run();

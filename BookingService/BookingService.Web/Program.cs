@@ -4,6 +4,7 @@ using BookingService.Infrastructure.Persistence;
 using BookingService.Web;
 using EventManager.Common.AspNetCore.Middleware;
 using Serilog;
+using Serilog.Formatting.Compact;
 
 var builder = WebApplication.CreateBuilder(args);
 var isDevelopment = builder.Environment.IsDevelopment();
@@ -40,6 +41,7 @@ if (isDevelopment)
 }
 
 app.UseRequestLogging();
+app.MapPrometheusScrapingEndpoint();
 app.UseHttpsRedirection();
 app.UseRouting();
 
@@ -49,6 +51,5 @@ app.UseAuthorization();
 app.Services.ApplyMigrations();
 
 app.MapControllers();
-app.MapPrometheusScrapingEndpoint();
 
 app.Run();
